@@ -1,0 +1,15 @@
+Sep 21, 2018, v.2.1.3
+  moved from subversion to github
+
+Aug 28, 2018, v.2.1.2
+  rna sequence loader: first release
+
+Aug 8, 2018, v.2.1.1
+  protein sequence loader: logging tune up
+  optimized sql queries to reduce running time by 20-30%
+
+Aug 7, 2018, v.2.1.0
+  protein sequence loader: totally new code, utilizes protein sequence files in fasta format from RefSeq
+
+Aug 2, 2018, v.2.0.0
+  initial version of sequence loader for NCBI nucleotide and protein sequences
