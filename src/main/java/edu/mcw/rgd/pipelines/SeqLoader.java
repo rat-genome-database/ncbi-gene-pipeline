@@ -19,9 +19,8 @@ abstract public class SeqLoader {
     Logger logStatus = Logger.getLogger("status");
     Dao dao = new Dao();
     boolean readOnlyMode = false;
-    Map<Integer,String> progressMap = new HashMap<>();
 
-    abstract public int run(int speciesTypeKey, int insertCap) throws Exception;
+    abstract public int run(int speciesTypeKey) throws Exception;
 
     // works for both protein and rna fasta files
     Map<String, String> loadFastaFile(String fastaFile) throws Exception {

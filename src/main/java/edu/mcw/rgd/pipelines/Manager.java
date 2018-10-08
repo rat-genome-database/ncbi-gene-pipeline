@@ -35,7 +35,7 @@ public class Manager {
                    loadRnaSeqs = true;
                    break;
                case "--load_protein_seqs":
-                   loadRnaSeqs = true;
+                   loadProteinSeqs = true;
                    break;
                default:
                    System.out.println("WARN: unknown cmdline parameter");
@@ -66,31 +66,17 @@ public class Manager {
         logStatus.info(this.getVersion());
         logStatus.info(dao.getConnectionInfo());
 
-        final int insertedSeqCap = 1000;
         List<Integer> speciesTypeKeys = new ArrayList(SpeciesType.getSpeciesTypeKeys());
-        while( !speciesTypeKeys.isEmpty() ) {
+        Collections.shuffle(speciesTypeKeys);
+        for( int speciesTypeKey: speciesTypeKeys ) {
             logStatus.info("");
-            Collections.shuffle(speciesTypeKeys);
-            logStatus.info("==== SPECIES TO PROCESS: "+ Arrays.toString(speciesTypeKeys.toArray()));
 
-            String progress = "     PROGRESS: ";
-            for (int sp : speciesTypeKeys) {
-                String speciesProgress = seqLoader.progressMap.get(sp);
-                progress += speciesProgress + ", ";
-            }
-            logStatus.info(progress);
-
-            int speciesTypeKey = speciesTypeKeys.get(0);
             if( speciesTypeKey == SpeciesType.ALL ) {
                 speciesTypeKeys.remove(0);
                 continue;
             }
 
-            int seqsInserted = seqLoader.run(speciesTypeKey, insertedSeqCap);
-            // if all sequences for this species are done, remove it from the processing list
-            if (seqsInserted <= 0) {
-                speciesTypeKeys.remove(0);
-            }
+            seqLoader.run(speciesTypeKey);
         }
 
         logStatus.info("=== OK == elapsed time "+Utils.formatElapsedTime(System.currentTimeMillis(), time0));

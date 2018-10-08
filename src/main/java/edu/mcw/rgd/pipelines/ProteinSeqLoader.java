@@ -7,7 +7,6 @@ import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.Map;
 
@@ -23,7 +22,7 @@ public class ProteinSeqLoader extends SeqLoader {
     private String proteinFastaFilesDir;
     private String oldNcbiProteinSeqType;
 
-    public int run(int speciesTypeKey, int insertCap) throws Exception {
+    public int run(int speciesTypeKey) throws Exception {
 
         String speciesName = SpeciesType.getCommonName(speciesTypeKey).toLowerCase();
         logStatus.info("PROTEIN SEQ LOADER for "+ speciesName);
@@ -38,6 +37,9 @@ public class ProteinSeqLoader extends SeqLoader {
 
         String proteinFastaFile = getProteinFastaFilesDir()+speciesName+"_protein.fa.gz";
         Map<String, String> proteinMap = loadFastaFile(proteinFastaFile);
+
+        // preload md5 for protein sequences
+        dao.loadMD5ForProteinSequences(speciesTypeKey, getNcbiProteinSeqType());
 
         // process the map in random order
         List<String> accIds = new ArrayList<String>(proteinMap.keySet());
@@ -64,30 +66,24 @@ public class ProteinSeqLoader extends SeqLoader {
             }
             int transcriptRgdId = transcriptRgdIds.get(0);
 
-            // get transcript protein as it is in NCBI database (RefSeq protein)
-            List<Sequence2> seqsInRgd = dao.getObjectSequences(transcriptRgdId, getNcbiProteinSeqType());
-            if( !seqsInRgd.isEmpty() ) {
-                Sequence2 seq = seqsInRgd.get(0);
-                if( seqsInRgd.size()>1 ) {
-                    logStatus.warn("unexpected: multiple protein sequences for one transcript...");
-                    sequencesWithIssues++;
-                    continue;
-                }
-
-                String md5 = Utils.generateMD5(proteinSeq);
-                if( seq.getSeqMD5().equals(md5) ) {
-                    sequencesUpToDate++;
-                    continue; // protein seq up-to-date
-                } else {
-                    logStatus.warn("MD5 different for "+accId);
+            String seqInRgdMD5 = dao.getMD5ForObjectSequences(transcriptRgdId);
+            if( seqInRgdMD5!=null ) {
+                // see if the protein sequence is the same
+                String seqIncomingMD5 = Utils.generateMD5(proteinSeq);
+                if( !seqIncomingMD5.equals(seqInRgdMD5) ) {
 
                     // incoming sequence differs from sequence in RGD!
                     // downgrade the old sequence to 'old_uniprot_seq'
-                    dao.changeSequenceType(transcriptRgdId, getNcbiProteinSeqType(), seq.getSeqMD5(), getOldNcbiProteinSeqType());
+                    if( !readOnlyMode ) {
+                        dao.changeSequenceType(transcriptRgdId, getNcbiProteinSeqType(), seqInRgdMD5, getOldNcbiProteinSeqType(), accId);
+                    }
 
-                    sequencesTypeChanged++;
+                } else {
+                    sequencesUpToDate++;
+                    continue; // protein seq up-to-date
                 }
             }
+
 
             if( !readOnlyMode ) {
                 Sequence2 seqIncoming = new Sequence2();
@@ -97,15 +93,7 @@ public class ProteinSeqLoader extends SeqLoader {
                 dao.insertSequence(seqIncoming);
             }
             sequencesInserted++;
-
-            if( sequencesInserted >= insertCap ) {
-                break;
-            }
         }
-
-        DecimalFormat df2 = new DecimalFormat("0.000");
-        String progress = df2.format((100.0f * proteinsProcessed)/proteinMap.size())+"%";
-        progressMap.put(speciesTypeKey, progress);
 
         logStatus.info("===");
         logStatus.info("protein sequences incoming: "+proteinMap.size());
@@ -134,7 +122,7 @@ public class ProteinSeqLoader extends SeqLoader {
 
     // original code: after running for 3 days and having downloaded barely few percent of the sequences
     // the script was aborted, because NCBI blacklisted the IP of my machine
-    public int runSlow(int speciesTypeKey, int insertCap) throws Exception {
+    public int runSlow(int speciesTypeKey) throws Exception {
 
         logStatus.info("PROTEIN SEQ LOADER for "+ SpeciesType.getCommonName(speciesTypeKey));
 
@@ -201,19 +189,9 @@ public class ProteinSeqLoader extends SeqLoader {
                     proteinSeqUpToDate++;
                 }
             }
-
-            if( proteinSeqInserted>= insertCap ) {
-                logStatus.info(" --- stopping -- INSERT cap reached! ");
-                genesProcessed++;
-                break;
-            }
         }
 
-        DecimalFormat df2 = new DecimalFormat("0.000");
-        String progress = df2.format((100.0f * genesProcessed)/genes.size())+"%";
-        progressMap.put(speciesTypeKey, progress);
-
-        logStatus.info("Genes processed: "+genesProcessed+"/"+genes.size()+"   "+ progress);
+        logStatus.info("Genes processed: "+genesProcessed+"/"+genes.size());
         logStatus.info("transcript count  : " + transcriptCount);
         if( nonCodingCount>0 ) {
             logStatus.info("  non-coding count: " + nonCodingCount);

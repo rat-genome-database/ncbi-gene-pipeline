@@ -20,7 +20,7 @@ public class RnaSeqLoader extends SeqLoader {
     private String rnaFastaFilesDir;
     private String ncbiRnaSeqType;
 
-    public int run(int speciesTypeKey, int insertCap) throws Exception {
+    public int run(int speciesTypeKey) throws Exception {
 
         String speciesName = SpeciesType.getCommonName(speciesTypeKey).toLowerCase();
         logStatus.info("RNA SEQ LOADER for "+ speciesName);
@@ -89,15 +89,8 @@ public class RnaSeqLoader extends SeqLoader {
                 dao.insertSequence(seqIncoming);
             }
             sequencesInserted++;
-
-            if( sequencesInserted >= insertCap ) {
-                break;
-            }
         }
 
-        DecimalFormat df2 = new DecimalFormat("0.000");
-        String progress = df2.format((100.0f * rnaProcessed)/rnaMap.size())+"%";
-        progressMap.put(speciesTypeKey, progress);
 
         logStatus.info("===");
         logStatus.info("rna sequences incoming: "+rnaMap.size());
