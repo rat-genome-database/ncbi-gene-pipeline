@@ -25,8 +25,32 @@ public class Manager {
         DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
         new XmlBeanDefinitionReader(bf).loadBeanDefinitions(new FileSystemResource("properties/AppConfigure.xml"));
         Manager manager = (Manager) (bf.getBean("manager"));
+
+        boolean loadRnaSeqs = false;
+        boolean loadProteinSeqs = false;
+
+        for( String arg: args ) {
+           switch(arg) {
+               case "--load_rna_seqs":
+                   loadRnaSeqs = true;
+                   break;
+               case "--load_protein_seqs":
+                   loadRnaSeqs = true;
+                   break;
+               default:
+                   System.out.println("WARN: unknown cmdline parameter");
+           }
+        }
+
         try {
-            manager.run((SeqLoader)(bf.getBean("seqLoader")));
+            if( loadRnaSeqs ) {
+                SeqLoader seqLoader = (SeqLoader) (bf.getBean("rnaSeqLoader"));
+                manager.run(seqLoader);
+            }
+            if( loadProteinSeqs ) {
+                SeqLoader seqLoader = (SeqLoader) (bf.getBean("proteinSeqLoader"));
+                manager.run(seqLoader);
+            }
         } catch(Exception e) {
             Utils.printStackTrace(e, manager.logStatus);
             throw e;

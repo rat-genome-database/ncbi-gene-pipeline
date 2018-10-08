@@ -8,6 +8,6 @@ EMAIL_LIST=mtutaj@mcw.edu
 #  EMAIL_LIST="mtutaj@mcw.edu,jrsmith@mcw.edu"
 #fi
 
-$APPDIR/_run.sh "$@" 2>&1 > $APPDIR/cron.log
+$APPDIR/_run.sh --load_rna_seqs --load_protein_seqs "$@" 2>&1 > $APPDIR/cron.log
 
 mailx -s "[$SERVER] Load rna and protein sequences OK" $EMAIL_LIST < $APPDIR/cron.log
