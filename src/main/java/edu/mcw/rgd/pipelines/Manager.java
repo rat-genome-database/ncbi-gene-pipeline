@@ -71,12 +71,9 @@ public class Manager {
         for( int speciesTypeKey: speciesTypeKeys ) {
             logStatus.info("");
 
-            if( speciesTypeKey == SpeciesType.ALL ) {
-                speciesTypeKeys.remove(0);
-                continue;
+            if( speciesTypeKey>0 ) {
+                seqLoader.run(speciesTypeKey);
             }
-
-            seqLoader.run(speciesTypeKey);
         }
 
         logStatus.info("=== OK == elapsed time "+Utils.formatElapsedTime(System.currentTimeMillis(), time0));

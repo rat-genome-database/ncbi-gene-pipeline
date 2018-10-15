@@ -1,3 +1,6 @@
+Oct 15, 2018, v.2.1.5
+  fixed bug introduced in the previous release
+
 Oct 08, 2018, v.2.1.4
   code refactored: created RnaSeqLoader and ProteinSeqLoader classes, with the common code still residing in SeqLoader class
   ProteinSeqLoader: implemented sequence history: when a reference sequence changes, we keep the old sequence
