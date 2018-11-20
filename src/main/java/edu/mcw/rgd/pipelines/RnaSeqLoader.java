@@ -17,6 +17,7 @@ public class RnaSeqLoader extends SeqLoader {
 
     private String rnaFastaFilesDir;
     private String ncbiRnaSeqType;
+    private String oldNcbiRnaSeqType;
 
     public int run(int speciesTypeKey) throws Exception {
 
@@ -32,6 +33,9 @@ public class RnaSeqLoader extends SeqLoader {
 
         String rnaFastaFile = getRnaFastaFilesDir()+speciesName+"_rna.fa.gz";
         Map<String, String> rnaMap = loadFastaFile(rnaFastaFile);
+
+        // preload md5 for rna sequences
+        dao.loadMD5ForProteinSequences(speciesTypeKey, getNcbiRnaSeqType());
 
         // process the map in random order
         List<String> accIds = new ArrayList<String>(rnaMap.keySet());
@@ -58,26 +62,24 @@ public class RnaSeqLoader extends SeqLoader {
             }
             int transcriptRgdId = transcriptRgdIds.get(0);
 
-            // get transcript rna seq as it is in NCBI database
-            List<Sequence> seqsInRgd = dao.getObjectSequences(transcriptRgdId, getNcbiRnaSeqType());
-            if( !seqsInRgd.isEmpty() ) {
-                Sequence seq = seqsInRgd.get(0);
-                if( seqsInRgd.size()>1 ) {
-                    logStatus.warn("unexpected: multiple rna sequences for one transcript...");
-                    sequencesWithIssues++;
-                    continue;
-                }
+            String seqInRgdMD5 = dao.getMD5ForObjectSequences(transcriptRgdId);
+            if( seqInRgdMD5!=null ) {
+                // see if the rna sequence is the same
+                String seqIncomingMD5 = Utils.generateMD5(rnaSeq);
+                if( !seqIncomingMD5.equals(seqInRgdMD5) ) {
 
-                String md5 = Utils.generateMD5(rnaSeq);
-                if( seq.getSeqMD5().equals(md5) ) {
+                    // incoming sequence differs from sequence in RGD!
+                    // downgrade the old sequence to 'old_ncbi_rna'
+                    if( !readOnlyMode ) {
+                        dao.changeSequenceType(transcriptRgdId, getNcbiRnaSeqType(), seqInRgdMD5, getOldNcbiRnaSeqType(), accId);
+                    }
+
+                } else {
                     sequencesUpToDate++;
                     continue; // rna seq up-to-date
-                } else {
-                    logStatus.warn("MD5 different for "+accId);
-                    sequencesWithIssues++;
-                    continue;
                 }
             }
+
 
             if( !readOnlyMode ) {
                 Sequence seqIncoming = new Sequence();
@@ -125,5 +127,13 @@ public class RnaSeqLoader extends SeqLoader {
 
     public String getNcbiRnaSeqType() {
         return ncbiRnaSeqType;
+    }
+
+    public void setOldNcbiRnaSeqType(String oldNcbiRnaSeqType) {
+        this.oldNcbiRnaSeqType = oldNcbiRnaSeqType;
+    }
+
+    public String getOldNcbiRnaSeqType() {
+        return oldNcbiRnaSeqType;
     }
 }

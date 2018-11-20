@@ -9,6 +9,7 @@
     <bean id="rnaSeqLoader" class="edu.mcw.rgd.pipelines.RnaSeqLoader">
         <property name="rnaFastaFilesDir" value="/ref/rna/" />
         <property name="ncbiRnaSeqType" value="ncbi_rna" />
+        <property name="oldNcbiRnaSeqType" value="old_ncbi_rna" />
     </bean>
 
 	<bean id="proteinSeqLoader" class="edu.mcw.rgd.pipelines.ProteinSeqLoader">
