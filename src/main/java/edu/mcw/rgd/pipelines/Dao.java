@@ -6,10 +6,7 @@ import edu.mcw.rgd.dao.impl.SequenceDAO;
 import edu.mcw.rgd.dao.impl.TranscriptDAO;
 import edu.mcw.rgd.dao.spring.IntListQuery;
 import edu.mcw.rgd.dao.spring.IntStringMapQuery;
-import edu.mcw.rgd.datamodel.Gene;
-import edu.mcw.rgd.datamodel.RgdId;
-import edu.mcw.rgd.datamodel.Sequence2;
-import edu.mcw.rgd.datamodel.Transcript;
+import edu.mcw.rgd.datamodel.*;
 import org.apache.log4j.Logger;
 
 import java.util.HashMap;
@@ -40,11 +37,11 @@ public class Dao {
 
     ///// SEQUENCES //////
 
-    public List<Sequence2> getObjectSequences(int rgdId, String seqType) throws Exception {
-        return sequenceDAO.getObjectSequences2(rgdId, seqType);
+    public List<Sequence> getObjectSequences(int rgdId, String seqType) throws Exception {
+        return sequenceDAO.getObjectSequences(rgdId, seqType);
     }
 
-    public int insertSequence(Sequence2 seq) throws Exception {
+    public int insertSequence(Sequence seq) throws Exception {
         int r = sequenceDAO.insertSequence(seq);
         logSequences.debug("INSERTED "+seq.dump("|"));
         return r;
@@ -53,8 +50,8 @@ public class Dao {
     public void changeSequenceType(int seqRgdId, String oldSeqType, String md5, String newSeqType, String accId) throws Exception {
 
         // find the old sequence object in RGD
-        List<Sequence2> seqsInRgd = getObjectSequences(seqRgdId, oldSeqType);
-        for( Sequence2 seqInRgd: seqsInRgd ) {
+        List<Sequence> seqsInRgd = getObjectSequences(seqRgdId, oldSeqType);
+        for( Sequence seqInRgd: seqsInRgd ) {
             if( seqInRgd.getSeqMD5().equals(md5) ) {
                 // found the sequence in RGD -- change its seq_type to 'newSeqType'
                 logSequences.info("SEQ_TYPE_CHANGE: old-seq-type="+seqInRgd.getSeqType()+", new-seq-type="+newSeqType+" : "+accId);

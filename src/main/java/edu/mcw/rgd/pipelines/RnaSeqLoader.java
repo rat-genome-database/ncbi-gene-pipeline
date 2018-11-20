@@ -4,8 +4,6 @@ import edu.mcw.rgd.datamodel.*;
 import edu.mcw.rgd.process.Utils;
 import org.apache.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.Map;
 
@@ -61,9 +59,9 @@ public class RnaSeqLoader extends SeqLoader {
             int transcriptRgdId = transcriptRgdIds.get(0);
 
             // get transcript rna seq as it is in NCBI database
-            List<Sequence2> seqsInRgd = dao.getObjectSequences(transcriptRgdId, getNcbiRnaSeqType());
+            List<Sequence> seqsInRgd = dao.getObjectSequences(transcriptRgdId, getNcbiRnaSeqType());
             if( !seqsInRgd.isEmpty() ) {
-                Sequence2 seq = seqsInRgd.get(0);
+                Sequence seq = seqsInRgd.get(0);
                 if( seqsInRgd.size()>1 ) {
                     logStatus.warn("unexpected: multiple rna sequences for one transcript...");
                     sequencesWithIssues++;
@@ -82,7 +80,7 @@ public class RnaSeqLoader extends SeqLoader {
             }
 
             if( !readOnlyMode ) {
-                Sequence2 seqIncoming = new Sequence2();
+                Sequence seqIncoming = new Sequence();
                 seqIncoming.setRgdId(transcriptRgdId);
                 seqIncoming.setSeqData(rnaSeq);
                 seqIncoming.setSeqType(getNcbiRnaSeqType());

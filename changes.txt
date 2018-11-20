@@ -1,3 +1,6 @@
+Nov 20, 2018, v.2.1.6
+  updated code to use new sequence API from rgdcore lib
+
 Oct 15, 2018, v.2.1.5
   fixed bug introduced in the previous release
 

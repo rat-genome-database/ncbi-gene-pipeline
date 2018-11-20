@@ -86,7 +86,7 @@ public class ProteinSeqLoader extends SeqLoader {
 
 
             if( !readOnlyMode ) {
-                Sequence2 seqIncoming = new Sequence2();
+                Sequence seqIncoming = new Sequence();
                 seqIncoming.setRgdId(transcriptRgdId);
                 seqIncoming.setSeqData(proteinSeq);
                 seqIncoming.setSeqType(getNcbiProteinSeqType());
@@ -158,8 +158,8 @@ public class ProteinSeqLoader extends SeqLoader {
                 codingCount++;
 
                 // get transcript protein as it is in NCBI database (RefSeq protein)
-                List<Sequence2> seqsInRgd = dao.getObjectSequences(transcript.getRgdId(), getNcbiProteinSeqType());
-                Sequence2 seq = null;
+                List<Sequence> seqsInRgd = dao.getObjectSequences(transcript.getRgdId(), getNcbiProteinSeqType());
+                Sequence seq = null;
                 if( !seqsInRgd.isEmpty() ) {
                     seq = seqsInRgd.get(0);
                     if( seqsInRgd.size()>1 ) {
@@ -179,7 +179,7 @@ public class ProteinSeqLoader extends SeqLoader {
                     if( !readOnlyMode ) {
                         System.out.println("INSERT protein seq for " + proteinSeq);
 
-                        Sequence2 seqIncoming = new Sequence2();
+                        Sequence seqIncoming = new Sequence();
                         seqIncoming.setRgdId(transcript.getRgdId());
                         seqIncoming.setSeqData(proteinSeq);
                         seqIncoming.setSeqType(getNcbiProteinSeqType());
