@@ -1,3 +1,6 @@
+Feb 11, 2019, v.2.1.7
+  migrated NcbiGeneHistoryLoader and BulkGeneMerger from gene-loading pipeline
+
 Nov 20, 2018, v.2.1.6
   updated code to use new sequence API from rgdcore lib
   rna seq loader: refactored code to significantly speed up the loader

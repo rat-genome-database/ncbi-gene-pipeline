@@ -1,16 +1,13 @@
 package edu.mcw.rgd.pipelines;
 
-import edu.mcw.rgd.dao.impl.GeneDAO;
-import edu.mcw.rgd.dao.impl.RGDManagementDAO;
-import edu.mcw.rgd.dao.impl.SequenceDAO;
-import edu.mcw.rgd.dao.impl.TranscriptDAO;
+import edu.mcw.rgd.dao.impl.*;
 import edu.mcw.rgd.dao.spring.IntListQuery;
 import edu.mcw.rgd.dao.spring.IntStringMapQuery;
 import edu.mcw.rgd.datamodel.*;
+import edu.mcw.rgd.process.Utils;
 import org.apache.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.Map;
 
 /**
@@ -19,10 +16,14 @@ import java.util.Map;
  */
 public class Dao {
 
+    AliasDAO aliasDAO = new AliasDAO();
     GeneDAO geneDAO = new GeneDAO();
+    MapDAO mapDAO = new MapDAO();
+    NomenclatureDAO nomenclatureDAO = new NomenclatureDAO();
     RGDManagementDAO rgdDAO = new RGDManagementDAO();
     SequenceDAO sequenceDAO = new SequenceDAO();
     TranscriptDAO transcriptDAO = new TranscriptDAO();
+    XdbIdDAO xdbIdDAO = new XdbIdDAO();
 
     Logger logSequences = Logger.getLogger("sequences");
 
@@ -30,10 +31,92 @@ public class Dao {
         return geneDAO.getConnectionInfo();
     }
 
+    ///// ALIASES //////
+
+    /**
+     * get list of aliases for given RGD_ID; exclude 'array_id_' aliases
+     * @param rgdId RGD_ID
+     * @return list of aliases associated with given RGD_ID
+     * @throws Exception if something wrong happens in spring framework
+     */
+    public List<Alias> getAliases(int rgdId) throws Exception {
+        List<Alias> aliases = aliasDAO.getAliases(rgdId);
+        Iterator<Alias> it = aliases.iterator();
+        while( it.hasNext() ) {
+            Alias alias = it.next();
+            if( Utils.defaultString(alias.getTypeName()).startsWith("array_id") )
+                it.remove();
+        }
+        return aliases;
+    }
+
+    public int insertAliases(List<Alias> aliases) throws Exception {
+        if( aliases.isEmpty() ) {
+            return 0;
+        }
+
+        for( Alias alias: aliases ) {
+            //logAliases.debug("INSERTING "+alias.dump("|"));
+        }
+        return aliasDAO.insertAliases(aliases);
+    }
+
+
+    ///// GENES //////
+
     public List<Gene> getActiveGenes(int speciesTypeKey) throws Exception {
 
         return geneDAO.getActiveGenes(speciesTypeKey);
     }
+
+    // get gene by symbol and species; return null if not found
+    public Gene getGeneBySymbolAndSpecies(String geneSymbol, int speciesKey) throws Exception {
+
+        List<Gene> genes = getGenesBySymbolAndSpecies(geneSymbol, speciesKey);
+        if( genes!=null && genes.size()>0 )
+            return genes.get(0);
+        return null;
+    }
+
+    // get gene by symbol and species; return null if not found
+    public List<Gene> getGenesBySymbolAndSpecies(String geneSymbol, int speciesKey) throws Exception {
+        return geneDAO.getAllGenesBySymbol(geneSymbol, speciesKey);
+    }
+
+    public Gene getGene(int rgdId) throws Exception {
+        return geneDAO.getGene(rgdId);
+    }
+
+
+    ///// MAP DATA /////
+
+    public List<MapData> getMapData(int rgdId) throws Exception {
+        return mapDAO.getMapData(rgdId);
+    }
+
+    public int insertMapData(List<MapData> mdList) throws Exception{
+        // always set src pipeline to 'NCBI'
+        for( MapData md: mdList ) {
+            md.setSrcPipeline("NCBI");
+            // throw exception if map_key or rgd_id is not set
+            if( md.getMapKey()==null || md.getMapKey()==0 || md.getRgdId()<=0 )
+                throw new Exception("insert map data: no map key or no rgd id");
+        }
+
+        return mapDAO.insertMapData(mdList);
+    }
+
+
+    ///// NOMENCLATURE EVENTS /////
+
+    public List<NomenclatureEvent> getNomenclatureEvents(int rgdId) throws Exception {
+        return nomenclatureDAO.getNomenclatureEvents(rgdId);
+    }
+
+    public void createNomenEvent(NomenclatureEvent event) throws Exception {
+        nomenclatureDAO.createNomenEvent(event);
+    }
+
 
     ///// SEQUENCES //////
 
@@ -115,7 +198,78 @@ public class Dao {
         return IntListQuery.execute(transcriptDAO, query, rnaAccId);
     }
 
+
+    ///// RGD IDS //////
+
     public RgdId getRgdId(int rgdId) throws Exception {
         return rgdDAO.getRgdId2(rgdId);
+    }
+
+    public void withdraw(Gene gene) throws Exception {
+        rgdDAO.withdraw(gene);
+    }
+
+
+    ///// XDB IDS //////
+
+    public List<Gene> getActiveGenesByXdbId(int xdbKey, String accId) throws Exception {
+
+        return xdbIdDAO.getActiveGenesByXdbId(xdbKey, accId);
+    }
+
+    /// same as XdbIdDAO.getGenesByXdbId(), but all genes of type 'allele' or 'splice' are excluded
+    public List<Gene> getGenesByEGID(String egId) throws Exception {
+
+        List<Gene> genes = xdbIdDAO.getGenesByXdbId(XdbId.XDB_KEY_ENTREZGENE, egId);
+        Iterator<Gene> it = genes.listIterator();
+        while( it.hasNext() ) {
+            Gene gene = it.next();
+            // remove all genes of type "splice" or "allele" from the list
+            if( gene.isVariant() ) {
+                it.remove();
+            }
+        }
+        return genes;
+    }
+
+    public List<XdbId> getXdbIds(XdbId filter) throws Exception {
+        return xdbIdDAO.getXdbIds(filter);
+    }
+
+    /**
+     * delete a list external ids (RGD_ACC_XDB rows);
+     * if ACC_XDB_KEY is provided, it is used to delete the row;
+     * else ACC_ID, RGD_ID, XDB_KEY and SRC_PIPELINE are used to locate and delete every row
+     *
+     * @param xdbIds list of external ids to be deleted
+     * @param objectType object type like 'TRANSCRIPT' or 'GENE' -- used in logging
+     * @return nr of rows deleted
+     * @throws Exception when unexpected error in spring framework occurs
+     */
+    public int deleteXdbIds(Collection<XdbId> xdbIds, String objectType ) throws Exception {
+
+        // sanity check
+        if( xdbIds==null )
+            return 0;
+
+        for( XdbId xdbId: xdbIds ) {
+            //logXdbIds.info("DELETE "+objectType+"|"+xdbId.dump("|"));
+        }
+        return xdbIdDAO.deleteXdbIds((List<XdbId>)xdbIds);
+    }
+
+    /**
+     * insert a bunch of XdbIds; duplicate entries are not inserted (with same RGD_ID,XDB_KEY,ACC_ID,SRC_PIPELINE)
+     * @param xdbIds list of XdbIds objects to be inserted
+     * @param objectType object type like 'TRANSCRIPT' or 'GENE' -- used in logging
+     * @return number of actually inserted rows
+     * @throws Exception when unexpected error in spring framework occurs
+     */
+    public int insertXdbs(Collection<XdbId> xdbIds, String objectType) throws Exception {
+
+        for( XdbId xdbId: xdbIds ) {
+            //logXdbIds.info("INSERT "+objectType+"|" + xdbId.dump("|"));
+        }
+        return xdbIdDAO.insertXdbs((List<XdbId>)xdbIds);
     }
 }

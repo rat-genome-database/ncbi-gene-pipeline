@@ -37,6 +37,9 @@ public class Manager {
                case "--load_protein_seqs":
                    loadProteinSeqs = true;
                    break;
+               case "--handle_ncbi_gene_history":
+                   new NcbiGeneHistoryLoader().run();
+                   break;
                default:
                    System.out.println("WARN: unknown cmdline parameter");
            }
