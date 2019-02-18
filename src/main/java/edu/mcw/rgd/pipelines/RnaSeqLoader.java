@@ -4,6 +4,7 @@ import edu.mcw.rgd.datamodel.*;
 import edu.mcw.rgd.process.Utils;
 import org.apache.log4j.Logger;
 
+import java.io.File;
 import java.util.*;
 import java.util.Map;
 
@@ -32,6 +33,13 @@ public class RnaSeqLoader extends SeqLoader {
         int inactiveTranscripts = 0;
 
         String rnaFastaFile = getRnaFastaFilesDir()+speciesName+"_rna.fa.gz";
+
+        File f = new File(rnaFastaFile);
+        if( !f.exists() ) {
+            logStatus.warn("  WARNING -- file "+rnaFastaFile+" not found!  ABORTING... ");
+            return 0;
+        }
+
         Map<String, String> rnaMap = loadFastaFile(rnaFastaFile);
 
         // preload md5 for rna sequences

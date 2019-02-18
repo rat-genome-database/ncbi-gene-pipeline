@@ -6,6 +6,7 @@ import edu.mcw.rgd.process.Utils;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.util.*;
 import java.util.Map;
@@ -36,6 +37,13 @@ public class ProteinSeqLoader extends SeqLoader {
         int inactiveTranscripts = 0;
 
         String proteinFastaFile = getProteinFastaFilesDir()+speciesName+"_protein.fa.gz";
+
+        File f = new File(proteinFastaFile);
+        if( !f.exists() ) {
+            logStatus.warn("  WARNING -- file "+proteinFastaFile+" not found!  ABORTING... ");
+            return 0;
+        }
+
         Map<String, String> proteinMap = loadFastaFile(proteinFastaFile);
 
         // preload md5 for protein sequences
