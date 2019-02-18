@@ -1,5 +1,4 @@
-# manually-run script:
-#   download gene_history.gz file from NCBI containing withdrawn and secondary NCBI gene ids
+# download gene_history.gz file from NCBI containing withdrawn and secondary NCBI gene ids
 #   and process it for all species except rat: withdraw genes or merge them (for secondary NCBI gene ids)
 
 HOMEDIR=/home/rgddata/pipelines/NcbiGene
