@@ -4,7 +4,7 @@
 HOMEDIR=/home/rgddata/pipelines/NcbiGene
 SERVER=`hostname -s | tr '[a-z]' '[A-Z]'`
 YMD=`date +"%Y-%m-%d"`
-LOGFILE="$HOMEDIR/${YMD}_ncbi_gene_history.log"
+LOGFILE="$HOMEDIR/logs/${YMD}_ncbi_gene_history.log"
 
 ELIST=mtutaj@mcw.edu
 if [ "$SERVER" == "REED" ]; then
@@ -14,7 +14,7 @@ fi
 cd $HOMEDIR
 
 echo "handle ncbi gene history"
-$HOMEDIR/_run.sh -ncbi_gene_history > $LOGFILE 2>&1
+$HOMEDIR/_run.sh --ncbi_gene_history > $LOGFILE 2>&1
 
 echo "ncbi gene history file processed"
 mailx -s "[$SERVER] NcbiGene pipeline gene history complete" $ELIST < $LOGFILE
