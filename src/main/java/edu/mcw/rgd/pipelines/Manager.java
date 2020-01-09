@@ -38,7 +38,8 @@ public class Manager {
                    loadProteinSeqs = true;
                    break;
                case "--ncbi_gene_history":
-                   new NcbiGeneHistoryLoader().run();
+                   NcbiGeneHistoryLoader loader = (NcbiGeneHistoryLoader) (bf.getBean("ncbiGeneHistoryLoader"));
+                   loader.run();
                    break;
                default:
                    System.out.println("WARN: unknown cmdline parameter");

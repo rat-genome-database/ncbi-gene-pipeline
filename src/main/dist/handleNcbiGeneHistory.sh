@@ -4,7 +4,7 @@
 HOMEDIR=/home/rgddata/pipelines/NcbiGene
 SERVER=`hostname -s | tr '[a-z]' '[A-Z]'`
 YMD=`date +"%Y-%m-%d"`
-LOGFILE="$HOMEDIR/logs/${YMD}_ncbi_gene_history.log"
+LOGFILE="$HOMEDIR/logs/ncbi_gene_history.log.${YMD}"
 
 ELIST=mtutaj@mcw.edu
 if [ "$SERVER" == "REED" ]; then

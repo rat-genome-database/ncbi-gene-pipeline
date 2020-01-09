@@ -3,7 +3,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <bean id="manager" class="edu.mcw.rgd.pipelines.Manager">
-        <property name="version" value="NcbiGene pipeline, v. 2.1.8, Feb 18, 2019" />
+        <property name="version" value="NcbiGene pipeline  -- build Jan 09, 2020" />
     </bean>
 
     <bean id="rnaSeqLoader" class="edu.mcw.rgd.pipelines.RnaSeqLoader">
@@ -17,6 +17,8 @@
         <property name="ncbiProteinSeqType" value="ncbi_protein" />
         <property name="oldNcbiProteinSeqType" value="old_ncbi_protein" />
 	</bean>
+
+    <bean id="ncbiGeneHistoryLoader" class="edu.mcw.rgd.pipelines.NcbiGeneHistoryLoader">
+        <property name="externalFile" value="ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_history.gz" />
+    </bean>
 </beans>
-
-

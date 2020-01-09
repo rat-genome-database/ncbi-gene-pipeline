@@ -18,17 +18,17 @@ import java.util.*;
 public class NcbiGeneHistoryLoader {
 
     Dao dao = new Dao();
+    private String externalFile;
 
     public void run() throws Exception {
 
         // download gene history file from NCBI
-        String url = "ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_history.gz";
         FileDownloader fd = new FileDownloader();
-        fd.setExternalFile(url);
-        fd.setPrependDateStamp(true);
+        fd.setExternalFile(getExternalFile());
+        fd.setAppendDateStamp(true);
         fd.setLocalFile("data/ncbi_gene_history.gz");
         String localFile = fd.downloadNew();
-        System.out.println("Downloaded "+url);
+        System.out.println("Downloaded "+getExternalFile());
 
         Counters counters = new Counters();
 
@@ -124,5 +124,13 @@ public class NcbiGeneHistoryLoader {
 
         System.out.println("===");
         counters.dump();
+    }
+
+    public void setExternalFile(String externalFile) {
+        this.externalFile = externalFile;
+    }
+
+    public String getExternalFile() {
+        return externalFile;
     }
 }
