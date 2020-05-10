@@ -3,7 +3,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <bean id="manager" class="edu.mcw.rgd.pipelines.Manager">
-        <property name="version" value="NcbiGene pipeline  -- build Jan 09, 2020" />
+        <property name="version" value="NcbiGene pipeline  -- build May 10, 2020" />
     </bean>
 
     <bean id="rnaSeqLoader" class="edu.mcw.rgd.pipelines.RnaSeqLoader">
