@@ -41,6 +41,11 @@ public class Manager {
                    NcbiGeneHistoryLoader loader = (NcbiGeneHistoryLoader) (bf.getBean("ncbiGeneHistoryLoader"));
                    loader.run();
                    break;
+               case "--reactivate_genes":
+                   // this module is dangerous and it should be run manually
+                   GeneReactivator reactivator = (GeneReactivator) (bf.getBean("geneReactivator"));
+                   reactivator.run();
+                   break;
                default:
                    System.out.println("WARN: unknown cmdline parameter");
            }

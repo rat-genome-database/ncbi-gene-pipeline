@@ -209,6 +209,10 @@ public class Dao {
         rgdDAO.withdraw(gene);
     }
 
+    public void updateRgdId(RgdId rgdId) throws Exception {
+        rgdDAO.updateRgdId(rgdId);
+    }
+
 
     ///// XDB IDS //////
 

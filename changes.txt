@@ -1,3 +1,6 @@
+Jul 24, 2020
+  moved maintenance module GeneReactivator from legacy 'gene-loading-pipeline'
+
 May 10, 2020
   updated jar dependencies
 
