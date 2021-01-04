@@ -1,5 +1,5 @@
 Jan 04, 2021
-  fixed NullPointerException
+  fixed NullPointerException in RnaSeqLoader and ProteinSeqLoader
 
 Jul 24, 2020
   moved maintenance module GeneReactivator from legacy 'gene-loading-pipeline'
