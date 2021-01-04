@@ -1,3 +1,6 @@
+Jan 04, 2021
+  fixed NullPointerException
+
 Jul 24, 2020
   moved maintenance module GeneReactivator from legacy 'gene-loading-pipeline'
 

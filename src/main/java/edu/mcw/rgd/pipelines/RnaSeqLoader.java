@@ -63,6 +63,11 @@ public class RnaSeqLoader extends SeqLoader {
             if( transcriptRgdIds.size()>1 ) {
                 inactiveTranscripts += removeInactive(transcriptRgdIds);
             }
+            if( transcriptRgdIds.isEmpty() ) {
+                logStatus.warn("  no active transcripts for "+accId);
+                sequencesWithMissingTranscripts++;
+                continue;
+            }
             if( transcriptRgdIds.size()>1 ) {
                 logStatus.warn("  multiple transcripts for "+accId);
                 sequencesWithIssues++;
