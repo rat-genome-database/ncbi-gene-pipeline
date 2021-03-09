@@ -1,3 +1,6 @@
+Mar 09, 2021
+  BulkGeneLoader: updated to do bulk merge for rn7 genes
+
 Jan 04, 2021
   fixed NullPointerException in RnaSeqLoader and ProteinSeqLoader
 

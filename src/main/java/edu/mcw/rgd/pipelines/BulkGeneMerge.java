@@ -26,6 +26,12 @@ public class BulkGeneMerge {
     [2017-07-13 14:26:57,736] - GeneTrackStatus=SECONDARY|OldGeneId=101967056|GeneRGDId=12732137|GeneSymbol=LOC101967056|CurrentGeneId=101967252|Species=Squirrel     */
     public static void main(String[] args) throws Exception {
 
+        try {
+            mergeGenesFor7(args);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
         Dao dao = new Dao();
 
         Map<Integer,Integer> mergeMap = new HashMap<>();
@@ -169,11 +175,107 @@ public class BulkGeneMerge {
         simpleMerge(fname, speciesTypeKey);
     }
 
+    static void mergeGenesFor7(String[] args) throws Exception {
+
+        // this is the file for merging:
+        // first 3 columns are NCBI-gene-id, RGD-id and gene symbol for 'merge-to' gene
+        // last 3 columns are NCBI-gene-id, RGD-id and gene symbol for 'merge-from' gene
+
+        // annotated_GeneID	RGD_ID	symbol	merge_GeneID	merge_RGD_ID	merge_symbol
+
+        Dao dao = new Dao();
+
+        Map<Integer,Integer> mergeMap = new HashMap<>();
+
+        BufferedWriter out = new BufferedWriter(new FileWriter("/tmp/notmerged.txt"));
+        BufferedReader reader = new BufferedReader(new FileReader(args[0]));
+        String line = reader.readLine(); // skip header line
+        while( (line=reader.readLine())!=null ) {
+            String[] cols = line.split("[\\t]", -1);
+
+            String toGeneId = cols[0];
+            int toRgdId = Integer.parseInt(cols[1]);
+            String geneSymbolTo = cols[2];
+
+            String fromGeneId = cols[3];
+            int fromRgdId = Integer.parseInt(cols[4]);
+            String geneSymbolFrom = cols[5];
+
+            Gene toGene = matchGene(toGeneId, toRgdId, geneSymbolTo, dao);
+            Gene fromGene = matchGene(fromGeneId, fromRgdId, geneSymbolFrom, dao);
+
+            // we have a match!
+            if( toGene!=null && fromGene!=null ) {
+                mergeMap.put(fromGene.getRgdId(), toGene.getRgdId());
+            } else {
+                out.append(line);
+                out.append("\n");
+            }
+        }
+        reader.close();
+        out.close();
+
+        System.out.println("to process: "+mergeMap.size());
+
+        String fname = "/tmp/merge_rgd_ids.txt";
+        out = new BufferedWriter(new FileWriter(fname));
+        out.write("merge-from-rgd-id\tmerge-to-rgd-id");
+        out.newLine();
+        for( Map.Entry<Integer,Integer> entry: mergeMap.entrySet() ) {
+            out.write(entry.getKey()+"\t"+entry.getValue());
+            out.newLine();
+        }
+        out.close();
+
+        simpleMerge(fname, 3);
+
+        System.exit(0);
+    }
+
+    static Gene matchGene(String geneId, int rgdId, String geneSymbol, Dao dao) throws Exception {
+
+        Gene gene = null;
+
+        // try to match by rgd id
+        if( rgdId != 0 ) {
+            gene = dao.getGene(rgdId);
+            // make sure the gene is active
+            if( !dao.getRgdId(gene.getRgdId()).getObjectStatus().equals("ACTIVE") ) {
+                System.out.println("gene is not active: RGD:"+rgdId+", "+geneSymbol+", NCBI gene id:"+geneId);
+                return null;
+            }
+
+            // now check if the NCBI gene id matches
+            List<Gene> genes = dao.getGenesByEGID(geneId);
+            for( Gene g: genes ) {
+                if( g.getRgdId()==rgdId ) {
+                    return g;
+                }
+            }
+            System.out.println("no match by EG ID: RGD:"+rgdId+", "+geneSymbol+", NCBI gene id:"+geneId);
+            return null;
+        }
+
+        // rgdId=0, match by EG ID
+        List<Gene> genes = dao.getGenesByEGID(geneId);
+        for( Gene g: genes ) {
+
+            // check if the gene is active
+            if( dao.getRgdId(g.getRgdId()).getObjectStatus().equals("ACTIVE") ) {
+                return g;
+            }
+        }
+
+        if( gene==null ) {
+            System.out.println("EG ID points to inactive gene(s) in RGD: RGD:"+rgdId+", "+geneSymbol+", NCBI gene id:"+geneId);
+            return null;
+        }
+        return gene;
+    }
+
     /**
-     * Created by IntelliJ IDEA.
-     * User: mtutaj
-     * Date: 7/27/15
-     * Time: 10:10 AM
+     * @author mtutaj
+     * @since 7/27/15
      * <p>
      * reads a list of genes to be merged from an external file, and then runs a merge
      * input file format:
