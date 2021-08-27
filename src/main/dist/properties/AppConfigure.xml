@@ -3,13 +3,19 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <bean id="manager" class="edu.mcw.rgd.pipelines.Manager">
-        <property name="version" value="NcbiGene pipeline  -- version 2021-03-09" />
+        <property name="version" value="NcbiGene pipeline  -- version 2021-08-26" />
     </bean>
 
     <bean id="rnaSeqLoader" class="edu.mcw.rgd.pipelines.RnaSeqLoader">
         <property name="rnaFastaFilesDir" value="/ref/rna/" />
         <property name="ncbiRnaSeqType" value="ncbi_rna" />
         <property name="oldNcbiRnaSeqType" value="old_ncbi_rna" />
+        <property name="files">
+            <map>
+                <entry key="1" value="/ref/rna/GCF_000001405.39_GRCh38.p13_rna.fna.gz" /> <!-- human -->
+                <entry key="2" value="/ref/rna/GCF_000001635.27_GRCm39_rna.fna.gz" /> <!-- mouse -->
+            </map>
+        </property>
     </bean>
 
 	<bean id="proteinSeqLoader" class="edu.mcw.rgd.pipelines.ProteinSeqLoader">

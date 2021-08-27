@@ -19,6 +19,7 @@ public class RnaSeqLoader extends SeqLoader {
     private String rnaFastaFilesDir;
     private String ncbiRnaSeqType;
     private String oldNcbiRnaSeqType;
+    private Map<Integer,String> files;
 
     public int run(int speciesTypeKey) throws Exception {
 
@@ -32,7 +33,13 @@ public class RnaSeqLoader extends SeqLoader {
         int sequencesWithMissingTranscripts = 0;
         int inactiveTranscripts = 0;
 
-        String rnaFastaFile = getRnaFastaFilesDir()+speciesName+"_rna.fa.gz";
+        // old way: obsolete:
+        // String rnaFastaFile = getRnaFastaFilesDir()+speciesName+"_rna.fa.gz";
+        String rnaFastaFile = getFiles().get(speciesTypeKey);
+        if( rnaFastaFile==null ) {
+            logStatus.warn("  WARNING -- rna fasta file for species "+speciesName+" not configured!  ABORTING... ");
+            return 0;
+        }
 
         File f = new File(rnaFastaFile);
         if( !f.exists() ) {
@@ -40,7 +47,9 @@ public class RnaSeqLoader extends SeqLoader {
             return 0;
         }
 
-        Map<String, String> rnaMap = loadFastaFile(rnaFastaFile);
+        // old obsolete code
+        //Map<String, String> rnaMap = loadFastaFile(rnaFastaFile);
+        Map<String, String> rnaMap = loadRnaFile(rnaFastaFile);
 
         // preload md5 for rna sequences
         dao.loadMD5ForProteinSequences(speciesTypeKey, getNcbiRnaSeqType());
@@ -148,5 +157,13 @@ public class RnaSeqLoader extends SeqLoader {
 
     public String getOldNcbiRnaSeqType() {
         return oldNcbiRnaSeqType;
+    }
+
+    public Map<Integer, String> getFiles() {
+        return files;
+    }
+
+    public void setFiles(Map<Integer, String> files) {
+        this.files = files;
     }
 }

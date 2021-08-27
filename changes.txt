@@ -1,3 +1,6 @@
+Aug 26, 2021
+  RnaSeqLoader: updated to handle new FTP file structure at NCBI
+
 Mar 09, 2021
   BulkGeneLoader: updated to do bulk merge for rn7 genes
 

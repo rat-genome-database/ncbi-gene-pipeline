@@ -103,4 +103,45 @@ abstract public class SeqLoader {
         }
         return removedCount;
     }
+
+    // newer files from RefSeq
+    Map<String, String> loadRnaFile(String fastaFile) throws Exception {
+
+        Map<String,String> resultMap = new HashMap<String, String>();
+        BufferedReader in = Utils.openReader(fastaFile);
+        String line, accId=null;
+        StringBuilder fastaSeq = new StringBuilder();
+        while( (line=in.readLine())!=null ) {
+
+            // typical line to parse:
+            // >NM_001001187.3 Mus musculus zinc finger protein 738 (Zfp738), mRNA
+            if( line.startsWith(">") ) {
+
+                // flush previous sequence
+                if( accId!=null && fastaSeq.length()>0 ) {
+                    if( resultMap.put(accId, fastaSeq.toString())!=null ) {
+                        throw new Exception("integrity error "+accId);
+                    }
+                }
+                accId = null;
+                fastaSeq.delete(0, fastaSeq.length());
+
+                int spacePos = line.indexOf(' ');
+                String acc = line.substring(1, spacePos);
+                // strip version from accession
+                accId = acc.substring(0, acc.indexOf('.'));
+            } else {
+                // accumulate fasta seq
+                fastaSeq.append(line.trim());
+            }
+        }
+        in.close();
+
+        if( accId!=null && fastaSeq.length()>0 ) {
+            if( resultMap.put(accId, fastaSeq.toString())!=null ) {
+                throw new Exception("integrity error "+accId);
+            }
+        }
+        return resultMap;
+    }
 }
