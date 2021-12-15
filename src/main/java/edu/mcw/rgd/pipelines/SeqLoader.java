@@ -3,7 +3,8 @@ package edu.mcw.rgd.pipelines;
 import edu.mcw.rgd.datamodel.RgdId;
 import edu.mcw.rgd.datamodel.Transcript;
 import edu.mcw.rgd.process.Utils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.util.*;
@@ -16,7 +17,7 @@ import java.util.Map;
  */
 abstract public class SeqLoader {
 
-    Logger logStatus = Logger.getLogger("status");
+    Logger logStatus = LogManager.getLogger("status");
     Dao dao = new Dao();
     boolean readOnlyMode = false;
 

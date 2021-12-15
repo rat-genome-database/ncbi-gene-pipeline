@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <!-- <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/> -->
+            <PatternLayout pattern="[%d{HH:mm:ss}] %msg%n"/>
+        </Console>
+
+        <RollingFile name="status" append="true" fileName="logs/status.log" filePattern="logs/status.log.%d{yyyy-MM}">
+            <PatternLayout pattern="%d %p [%c] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <File name="summary" append="false" fileName="logs/summary.log">
+            <PatternLayout pattern="%m%n"/>
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+        </File>
+
+        <RollingFile name="missingTranscripts" append="true" fileName="logs/missingTranscripts.log" filePattern="logs/missingTranscripts.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="sequences" append="true" fileName="logs/sequences.log" filePattern="logs/sequences.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+        </Root>
+        <!-- daily -->
+        <Logger name="status" level="info" additivity="false">
+            <AppenderRef ref="status"/>
+            <AppenderRef ref="summary"/><!-- human readable -->
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+
+        <!-- monthly -->
+        <Logger name="missingTranscripts" level="debug" additivity="false">
+            <AppenderRef ref="missingTranscripts"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="sequences" level="debug" additivity="false">
+            <AppenderRef ref="sequences"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+    </Loggers>
+</Configuration>

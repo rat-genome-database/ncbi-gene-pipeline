@@ -2,7 +2,8 @@ package edu.mcw.rgd.pipelines;
 
 import edu.mcw.rgd.datamodel.*;
 import edu.mcw.rgd.process.Utils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.*;
@@ -14,7 +15,7 @@ import java.util.Map;
  */
 public class RnaSeqLoader extends SeqLoader {
 
-    Logger logMissingTranscripts = Logger.getLogger("missingTranscripts");
+    Logger logMissingTranscripts = LogManager.getLogger("missingTranscripts");
 
     private String rnaFastaFilesDir;
     private String ncbiRnaSeqType;

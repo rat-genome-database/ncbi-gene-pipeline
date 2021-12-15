@@ -5,7 +5,8 @@ import edu.mcw.rgd.dao.spring.IntListQuery;
 import edu.mcw.rgd.dao.spring.IntStringMapQuery;
 import edu.mcw.rgd.datamodel.*;
 import edu.mcw.rgd.process.Utils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.Map;
@@ -25,7 +26,7 @@ public class Dao {
     TranscriptDAO transcriptDAO = new TranscriptDAO();
     XdbIdDAO xdbIdDAO = new XdbIdDAO();
 
-    Logger logSequences = Logger.getLogger("sequences");
+    Logger logSequences = LogManager.getLogger("sequences");
 
     public String getConnectionInfo() {
         return geneDAO.getConnectionInfo();

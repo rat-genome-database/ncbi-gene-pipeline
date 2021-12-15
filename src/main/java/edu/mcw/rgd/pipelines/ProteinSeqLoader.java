@@ -3,7 +3,8 @@ package edu.mcw.rgd.pipelines;
 import edu.mcw.rgd.datamodel.*;
 import edu.mcw.rgd.process.FileDownloader;
 import edu.mcw.rgd.process.Utils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -17,7 +18,7 @@ import java.util.Map;
  */
 public class ProteinSeqLoader extends SeqLoader {
 
-    Logger logSequences = Logger.getLogger("sequences");
+    Logger logSequences = LogManager.getLogger("sequences");
 
     private String ncbiProteinSeqType;
     private String proteinFastaFilesDir;

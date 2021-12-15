@@ -1,3 +1,6 @@
+Dec 14, 2021
+  updated log4j to avoid zero day vulnerability
+
 Aug 26, 2021
   RnaSeqLoader: updated to handle new FTP file structure at NCBI
 
