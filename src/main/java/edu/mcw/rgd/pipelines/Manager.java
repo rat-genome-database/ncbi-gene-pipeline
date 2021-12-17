@@ -8,8 +8,6 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.core.io.FileSystemResource;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -65,9 +63,7 @@ public class Manager {
             }
         } catch(Exception e) {
             // print stack trace to error stream
-            ByteArrayOutputStream bs = new ByteArrayOutputStream();
-            e.printStackTrace(new PrintStream(bs));
-            manager.logStatus.error(bs.toString());
+            Utils.printStackTrace(e, manager.logStatus);
             throw e;
         }
     }
