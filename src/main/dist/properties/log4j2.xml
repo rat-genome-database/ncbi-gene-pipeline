@@ -29,6 +29,12 @@
                 <TimeBasedTriggeringPolicy interval="1"/>
             </Policies>
         </RollingFile>
+        <RollingFile name="aliases" append="true" fileName="logs/aliases.log" filePattern="logs/aliases.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
     </Appenders>
 
     <Loggers>
@@ -49,6 +55,10 @@
         </Logger>
         <Logger name="sequences" level="debug" additivity="false">
             <AppenderRef ref="sequences"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="aliases" level="debug" additivity="false">
+            <AppenderRef ref="aliases"/>
             <AppenderRef ref="Console" level="info"/>
         </Logger>
     </Loggers>

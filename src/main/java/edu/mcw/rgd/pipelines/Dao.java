@@ -26,6 +26,7 @@ public class Dao {
     TranscriptDAO transcriptDAO = new TranscriptDAO();
     XdbIdDAO xdbIdDAO = new XdbIdDAO();
 
+    Logger logAliases = LogManager.getLogger("aliases");
     Logger logSequences = LogManager.getLogger("sequences");
 
     public String getConnectionInfo() {
@@ -57,7 +58,7 @@ public class Dao {
         }
 
         for( Alias alias: aliases ) {
-            //logAliases.debug("INSERTING "+alias.dump("|"));
+            logAliases.debug("INSERTING "+alias.dump("|"));
         }
         return aliasDAO.insertAliases(aliases);
     }
