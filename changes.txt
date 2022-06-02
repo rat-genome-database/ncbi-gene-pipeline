@@ -1,5 +1,6 @@
 Jun 02, 2022
   updated BulkGeneMerge
+  added BulkGeneRename
 
 Mar 10, 2022
   added log 'aliases'

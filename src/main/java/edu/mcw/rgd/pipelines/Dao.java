@@ -1,6 +1,7 @@
 package edu.mcw.rgd.pipelines;
 
 import edu.mcw.rgd.dao.impl.*;
+import edu.mcw.rgd.dao.spring.AliasQuery;
 import edu.mcw.rgd.dao.spring.IntListQuery;
 import edu.mcw.rgd.dao.spring.IntStringMapQuery;
 import edu.mcw.rgd.datamodel.*;
@@ -52,6 +53,13 @@ public class Dao {
         return aliases;
     }
 
+    public int insertAlias(Alias alias) throws Exception {
+
+        List<Alias> aliases = new ArrayList<>();
+        aliases.add(alias);
+        return insertAliases(aliases);
+    }
+
     public int insertAliases(List<Alias> aliases) throws Exception {
         if( aliases.isEmpty() ) {
             return 0;
@@ -63,6 +71,9 @@ public class Dao {
         return aliasDAO.insertAliases(aliases);
     }
 
+    public List<Alias> getAliases(int rgdId, String aliasType) throws Exception {
+        return aliasDAO.getAliases(rgdId, aliasType);
+    }
 
     ///// GENES //////
 
@@ -87,6 +98,10 @@ public class Dao {
 
     public Gene getGene(int rgdId) throws Exception {
         return geneDAO.getGene(rgdId);
+    }
+
+    public void updateGene(Gene g) throws Exception {
+        geneDAO.updateGene(g);
     }
 
 
@@ -215,6 +230,9 @@ public class Dao {
         rgdDAO.updateRgdId(rgdId);
     }
 
+    public void updateLastModifiedDate(int rgdId) throws Exception {
+        rgdDAO.updateLastModifiedDate(rgdId);
+    }
 
     ///// XDB IDS //////
 
