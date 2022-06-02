@@ -26,7 +26,14 @@ public class BulkGeneMerge {
     [2017-07-13 14:26:57,736] - GeneTrackStatus=SECONDARY|OldGeneId=101967056|GeneRGDId=12732137|GeneSymbol=LOC101967056|CurrentGeneId=101967252|Species=Squirrel     */
     public static void main(String[] args) throws Exception {
 
+        int speciesTypeKey = 3;
+        String fname;
         try {
+            fname = "/tmp/dev.txt";
+            speciesTypeKey = 3;
+            simpleMerge(fname, speciesTypeKey);
+            System.exit(0);
+
             mergeGenesFor7(args);
         } catch(Exception e) {
             e.printStackTrace();
@@ -35,7 +42,7 @@ public class BulkGeneMerge {
         Dao dao = new Dao();
 
         Map<Integer,Integer> mergeMap = new HashMap<>();
-        int speciesTypeKey = 0;
+        speciesTypeKey = 0;
 
         BufferedWriter out = new BufferedWriter(new FileWriter("/tmp/notmerged.txt"));
         BufferedReader reader = new BufferedReader(new FileReader(args[0]));
@@ -163,7 +170,7 @@ public class BulkGeneMerge {
 
         System.out.println("to process: "+mergeMap.size());
 
-        String fname = "/tmp/merge_rgd_ids.txt";
+        fname = "/tmp/merge_rgd_ids.txt";
         out = new BufferedWriter(new FileWriter(fname));
         out.write("merge-from-rgd-id\tmerge-to-rgd-id");
         out.newLine();
@@ -290,7 +297,7 @@ public class BulkGeneMerge {
         BufferedReader reader = new BufferedReader(new FileReader(fname));
         String line = reader.readLine(); // skip header line
         while( (line=reader.readLine())!=null ) {
-            String[] cols = line.split("[\\t]", -1);
+            String[] cols = line.split("[\\t\\,]", -1);
             int mergeFromRgdId = Integer.parseInt(cols[0]);
             int mergeToRgdId = Integer.parseInt(cols[1]);
             String keepThisGeneId = cols.length>2 ? cols[2].trim() : null;
@@ -348,18 +355,24 @@ public class BulkGeneMerge {
         List<Alias> aliasesFrom = dao.getAliases(geneFrom.getRgdId());
         List<Alias> aliasesTo = dao.getAliases(geneTo.getRgdId());
 
-        Alias alias = new Alias();
-        alias.setTypeName("old_gene_symbol");
-        alias.setValue(geneFrom.getSymbol());
-        alias.setNotes("created by GeneMerge tool on "+new Date());
-        aliasesFrom.add(alias);
+        Alias alias;
 
-        // shall from-gene name be added as alias to to-gene?
-        alias = new Alias();
-        alias.setTypeName("old_gene_name");
-        alias.setValue(geneFrom.getName());
-        alias.setNotes("created by GeneMerge tool on "+new Date());
-        aliasesFrom.add(alias);
+        if( !Utils.isStringEmpty(geneFrom.getSymbol()) ) {
+            alias = new Alias();
+            alias.setTypeName("old_gene_symbol");
+            alias.setValue(geneFrom.getSymbol());
+            alias.setNotes("created by GeneMerge tool on " + new Date());
+            aliasesFrom.add(alias);
+        }
+
+        if( !Utils.isStringEmpty(geneFrom.getName()) ) {
+            // shall from-gene name be added as alias to to-gene?
+            alias = new Alias();
+            alias.setTypeName("old_gene_name");
+            alias.setValue(geneFrom.getName());
+            alias.setNotes("created by GeneMerge tool on " + new Date());
+            aliasesFrom.add(alias);
+        }
 
         // remove duplicates
         Iterator<Alias> it = aliasesFrom.iterator();
