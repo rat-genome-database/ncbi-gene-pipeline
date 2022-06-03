@@ -1,3 +1,6 @@
+Jun 03, 2022
+  BulkGeneRename: better qc
+
 Jun 02, 2022
   updated BulkGeneMerge
   added BulkGeneRename

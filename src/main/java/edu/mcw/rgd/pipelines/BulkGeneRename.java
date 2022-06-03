@@ -8,10 +8,7 @@ import edu.mcw.rgd.process.CounterPool;
 import edu.mcw.rgd.process.Utils;
 
 import java.io.BufferedReader;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class BulkGeneRename {
 
@@ -33,6 +30,7 @@ public class BulkGeneRename {
         Dao dao = new Dao();
         HashSet<Integer> rgdIdSet = new HashSet<>();
         HashSet<Integer> duplicates = new HashSet<>();
+        Map<Integer,List<String>> lineMap = new HashMap<>();
 
         // file is a TAB-separated file with the following columns:
         // #RGDID	New name	New symbol
@@ -52,6 +50,14 @@ public class BulkGeneRename {
                 continue;
             }
             int rgdId = Integer.parseInt(rgdIdStr);
+
+            List<String> lines = lineMap.get(rgdId);
+            if( lines==null ) {
+                lines = new ArrayList<>();
+                lineMap.put(rgdId, lines);
+            }
+            lines.add(lineNr+". "+line);
+
             if( !rgdIdSet.add(rgdId) ) {
                 System.out.println(lineNr+". DUPLICATE: "+line);
                 duplicates.add(rgdId);
@@ -69,6 +75,10 @@ public class BulkGeneRename {
         System.out.println("DUPLICATES: "+duplicates.size());
         for( int id: duplicates ) {
             System.out.println("RGD:"+id);
+            List<String> lines = lineMap.get(id);
+            for( String aLine: lines ) {
+                System.out.println("    "+aLine);
+            }
         }
     }
 
