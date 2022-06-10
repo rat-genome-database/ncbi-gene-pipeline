@@ -6,20 +6,24 @@ import edu.mcw.rgd.datamodel.NomenclatureEvent;
 import edu.mcw.rgd.datamodel.RgdId;
 import edu.mcw.rgd.process.CounterPool;
 import edu.mcw.rgd.process.Utils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.util.*;
 
 public class BulkGeneRename {
 
+    static Logger logStatus = LogManager.getLogger("status");
+
     public static void main(String[] args) throws Exception {
 
         try {
             int speciesTypeKey = 3;
-            String fname = "/tmp/rat_nomen.txt";
+            String fname = "/tmp/rat_nomen2.txt";
             bulkRename(fname, speciesTypeKey);
         } catch(Exception e) {
-            e.printStackTrace();
+            Utils.printStackTrace(e, logStatus);
         }
 
     }

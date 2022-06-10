@@ -4,6 +4,8 @@ import edu.mcw.rgd.dao.impl.*;
 import edu.mcw.rgd.datamodel.*;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
 import edu.mcw.rgd.process.Utils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -21,22 +23,21 @@ import java.util.Map;
  */
 public class BulkGeneMerge {
 
-    /**
-     * input file format:
-    [2017-07-13 14:26:57,736] - GeneTrackStatus=SECONDARY|OldGeneId=101967056|GeneRGDId=12732137|GeneSymbol=LOC101967056|CurrentGeneId=101967252|Species=Squirrel     */
+    static Logger logStatus = LogManager.getLogger("status");
+
     public static void main(String[] args) throws Exception {
 
         int speciesTypeKey = 3;
         String fname;
         try {
-            fname = "/tmp/dev.txt";
-            speciesTypeKey = 3;
+            fname = "/tmp/human_dups.txt";
+            speciesTypeKey = 1;
             simpleMerge(fname, speciesTypeKey);
             System.exit(0);
 
             mergeGenesFor7(args);
         } catch(Exception e) {
-            e.printStackTrace();
+            Utils.printStackTrace(e, logStatus);
         }
 
         Dao dao = new Dao();
