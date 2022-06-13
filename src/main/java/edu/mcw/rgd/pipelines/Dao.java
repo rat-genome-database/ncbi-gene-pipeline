@@ -1,7 +1,6 @@
 package edu.mcw.rgd.pipelines;
 
 import edu.mcw.rgd.dao.impl.*;
-import edu.mcw.rgd.dao.spring.AliasQuery;
 import edu.mcw.rgd.dao.spring.IntListQuery;
 import edu.mcw.rgd.dao.spring.IntStringMapQuery;
 import edu.mcw.rgd.datamodel.*;
@@ -44,12 +43,7 @@ public class Dao {
      */
     public List<Alias> getAliases(int rgdId) throws Exception {
         List<Alias> aliases = aliasDAO.getAliases(rgdId);
-        Iterator<Alias> it = aliases.iterator();
-        while( it.hasNext() ) {
-            Alias alias = it.next();
-            if( Utils.defaultString(alias.getTypeName()).startsWith("array_id") )
-                it.remove();
-        }
+        aliases.removeIf(alias -> Utils.defaultString(alias.getTypeName()).startsWith("array_id"));
         return aliases;
     }
 
@@ -78,20 +72,9 @@ public class Dao {
     ///// GENES //////
 
     public List<Gene> getActiveGenes(int speciesTypeKey) throws Exception {
-
         return geneDAO.getActiveGenes(speciesTypeKey);
     }
 
-    // get gene by symbol and species; return null if not found
-    public Gene getGeneBySymbolAndSpecies(String geneSymbol, int speciesKey) throws Exception {
-
-        List<Gene> genes = getGenesBySymbolAndSpecies(geneSymbol, speciesKey);
-        if( genes!=null && genes.size()>0 )
-            return genes.get(0);
-        return null;
-    }
-
-    // get gene by symbol and species; return null if not found
     public List<Gene> getGenesBySymbolAndSpecies(String geneSymbol, int speciesKey) throws Exception {
         return geneDAO.getAllGenesBySymbol(geneSymbol, speciesKey);
     }
