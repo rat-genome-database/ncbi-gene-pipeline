@@ -20,7 +20,7 @@ public class BulkGeneRename {
 
         try {
             int speciesTypeKey = 3;
-            String fname = "/tmp/rat_nomen2.txt";
+            String fname = "/tmp/rat_nomen3.txt";
             bulkRename(fname, speciesTypeKey);
         } catch(Exception e) {
             Utils.printStackTrace(e, logStatus);
@@ -47,6 +47,9 @@ public class BulkGeneRename {
             if( line.startsWith("#") ) {
                 continue;
             }
+
+            line = removeDoubleQuotes(line);
+
             String[] cols = line.split("[\\t]", -1);
             String rgdIdStr = cols[0];
             if( Utils.isStringEmpty(rgdIdStr) ) {
@@ -84,6 +87,31 @@ public class BulkGeneRename {
                 System.out.println("    "+aLine);
             }
         }
+    }
+
+    static String removeDoubleQuotes(String s) {
+
+        while( true) {
+            int pos1 = s.indexOf('\"');
+            if( pos1<0 ) {
+                break; // no double quotes in 's'
+            }
+            int pos2 = s.indexOf('\"', pos1+1);
+            if( pos2<0 ) {
+                break; // no matching double quotes
+            }
+
+            String out = "";
+            if( pos1>0 ) {
+                out = s.substring(0, pos1);
+            }
+            String quotedStr = s.substring(pos1+1, pos2).trim();
+            out += quotedStr;
+
+            out += s.substring(pos2+1);
+            s = out;
+        }
+        return s;
     }
 
     static boolean simpleRename(int rgdId, String newName, String newSymbol, CounterPool counters, Dao dao, int speciesTypeKey) throws Exception {
@@ -156,7 +184,7 @@ public class BulkGeneRename {
         System.out.println((counters.get("GENES PROCESSED")+1)
                 +".  RGD:"+rgdId+"\n"
                 +"   SYMBOL ["+oldSymbol+"] ==> ["+newSymbol+"]\n"
-                +"   SYMBOL ["+oldName+"] ==> ["+newName+"]\n");
+                +"   NAME ["+oldName+"] ==> ["+newName+"]\n");
 
         counters.add("aliases inserted", aliasesInserted);
         counters.increment("nomen inserted");

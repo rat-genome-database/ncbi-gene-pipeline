@@ -1,3 +1,6 @@
+Jul 08, 2022
+  BulkGeneRename: parser: added handling of double quotes
+
 Jun 13, 2022
   code cleanup
 
