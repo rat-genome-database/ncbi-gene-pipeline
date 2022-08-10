@@ -110,7 +110,7 @@ public class NcbiGeneHistoryLoader {
                     counters.increment("GENES WITHDRAWN FOR " + species);
                     continue;
                 } else {
-                    System.out.println(cnt+". CONFLICT: " + line);
+                    System.out.println(cnt+". CONFLICT for "+species+" old NCBI:"+oldGeneId+" new NCBI:"+newGeneId+" symbol:"+cols[3]+" discontinued:"+cols[4]);
                     counters.increment("GENES WITH CONFLICT FOR " + species);
                     continue;
                 }
