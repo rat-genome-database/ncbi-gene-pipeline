@@ -1,9 +1,6 @@
 package edu.mcw.rgd.pipelines;
 
-import edu.mcw.rgd.datamodel.Alias;
-import edu.mcw.rgd.datamodel.Gene;
-import edu.mcw.rgd.datamodel.NomenclatureEvent;
-import edu.mcw.rgd.datamodel.RgdId;
+import edu.mcw.rgd.datamodel.*;
 import edu.mcw.rgd.process.CounterPool;
 import edu.mcw.rgd.process.Utils;
 import org.apache.logging.log4j.LogManager;
@@ -11,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.util.*;
+import java.util.Map;
 
 public class BulkGeneRename {
 
@@ -19,16 +17,23 @@ public class BulkGeneRename {
     public static void main(String[] args) throws Exception {
 
         try {
+            boolean dryRun = true;
             int speciesTypeKey = 3;
-            String fname = "/tmp/rat_nomen3.txt";
-            bulkRename(fname, speciesTypeKey);
+            //String fname = "/tmp/rat_nomen3.txt";
+            //bulkRename(fname, speciesTypeKey);
+
+            String fname = "/tmp/rat_olfactory_nomen.txt";
+            bulkRename2(fname, speciesTypeKey, dryRun);
         } catch(Exception e) {
             Utils.printStackTrace(e, logStatus);
         }
 
     }
 
-    static void bulkRename(String fname, int speciesTypeKey) throws Exception {
+    // file is a TAB-separated file with the following columns:
+    // #RGDID	New name	New symbol
+    //1586626	alpha- and gamma-adaptin binding protein, pseudogene 1	Aagab-ps1
+    static void bulkRename(String fname, int speciesTypeKey, boolean dryRun) throws Exception {
 
         CounterPool counters = new CounterPool();
         Dao dao = new Dao();
@@ -36,9 +41,6 @@ public class BulkGeneRename {
         HashSet<Integer> duplicates = new HashSet<>();
         Map<Integer,List<String>> lineMap = new HashMap<>();
 
-        // file is a TAB-separated file with the following columns:
-        // #RGDID	New name	New symbol
-        //1586626	alpha- and gamma-adaptin binding protein, pseudogene 1	Aagab-ps1
         BufferedReader in = Utils.openReader(fname);
         int lineNr = 0;
         String line;
@@ -71,13 +73,92 @@ public class BulkGeneRename {
             }
             String newName = cols[1].trim();
             String newSymbol = cols[2].trim();
-            if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey) ) {
+            if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun) ) {
                 System.out.println(lineNr+". SKIPPED: "+line);
             }
         }
         in.close();
 
         System.out.println(counters.dumpAlphabetically());
+
+        dumpDuplicates(duplicates, lineMap);
+    }
+
+    // file is a TAB-separated file with the following columns:
+    //Current symbol	New Symbol	New name
+    //LOC100360557	Or13a19	olfactory receptor family 13 subfamily A member 19
+    static void bulkRename2(String fname, int speciesTypeKey, boolean dryRun) throws Exception {
+
+        CounterPool counters = new CounterPool();
+        Dao dao = new Dao();
+        HashSet<Integer> rgdIdSet = new HashSet<>();
+        HashSet<Integer> duplicates = new HashSet<>();
+        Map<Integer,List<String>> lineMap = new HashMap<>();
+
+        BufferedReader in = Utils.openReader(fname);
+        int lineNr = 0;
+        String line;
+        while( (line=in.readLine())!=null ) {
+            lineNr++;
+            if( line.startsWith("#") ) {
+                continue;
+            }
+
+            line = removeDoubleQuotes(line);
+
+            String[] cols = line.split("[\\t]", -1);
+            String oldSymbol = cols[0];
+            if( Utils.isStringEmpty(oldSymbol) ) {
+                counters.increment("NO OLD SYMBOL for line "+lineNr+": "+line);
+                continue;
+            }
+            List<Gene> matchingGenes = dao.getGenesBySymbolAndSpecies(oldSymbol, SpeciesType.RAT);
+            if( matchingGenes.isEmpty() ) {
+                counters.increment("NO GENE MATCH BY SYMBOL for line "+lineNr+": "+line);
+                continue;
+            }
+            if( matchingGenes.size()>1 ) {
+                // remove inactive genes
+                for( int i=matchingGenes.size()-1; i>=0; i-- ) {
+                    Gene g = matchingGenes.get(i);
+                    RgdId id = dao.getRgdId(g.getRgdId());
+                    if( !id.getObjectStatus().equals("ACTIVE") ) {
+                        matchingGenes.remove(i);
+                    }
+                }
+
+                if( matchingGenes.size()>1 ) {
+                    counters.increment("MULTI GENE MATCH BY SYMBOL for line " + lineNr + ": " + line);
+                    continue;
+                }
+            }
+            int rgdId = matchingGenes.get(0).getRgdId();
+
+            List<String> lines = lineMap.get(rgdId);
+            if( lines==null ) {
+                lines = new ArrayList<>();
+                lineMap.put(rgdId, lines);
+            }
+            lines.add(lineNr+". "+line);
+
+            if( !rgdIdSet.add(rgdId) ) {
+                System.out.println(lineNr+". DUPLICATE: "+line);
+                duplicates.add(rgdId);
+            }
+            String newSymbol = cols[1].trim();
+            String newName = cols[2].trim();
+            if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun) ) {
+                System.out.println(lineNr+". SKIPPED: "+line);
+            }
+        }
+        in.close();
+
+        System.out.println(counters.dumpAlphabetically());
+
+        dumpDuplicates(duplicates, lineMap);
+    }
+
+    static void dumpDuplicates( Set<Integer> duplicates, Map<Integer,List<String>> lineMap ) {
 
         System.out.println("DUPLICATES: "+duplicates.size());
         for( int id: duplicates ) {
@@ -114,7 +195,7 @@ public class BulkGeneRename {
         return s;
     }
 
-    static boolean simpleRename(int rgdId, String newName, String newSymbol, CounterPool counters, Dao dao, int speciesTypeKey) throws Exception {
+    static boolean simpleRename(int rgdId, String newName, String newSymbol, CounterPool counters, Dao dao, int speciesTypeKey, boolean dryRun) throws Exception {
 
         counters.increment("GENES PROCESSED");
 
@@ -143,15 +224,17 @@ public class BulkGeneRename {
         // update gene
         gene.setSymbol(newSymbol);
         gene.setName(newName);
-        dao.updateGene(gene);
-        dao.updateLastModifiedDate(rgdId);
+        if( !dryRun ) {
+            dao.updateGene(gene);
+            dao.updateLastModifiedDate(rgdId);
+        }
 
         int aliasesInserted = 0;
         if( symbolChanged ) {
-            aliasesInserted += addAlias("old_gene_symbol", oldSymbol, rgdId, dao);
+            aliasesInserted += addAlias("old_gene_symbol", oldSymbol, rgdId, dao, dryRun);
         }
         if( nameChanged ) {
-            aliasesInserted += addAlias("old_gene_name", oldName, rgdId, dao);
+            aliasesInserted += addAlias("old_gene_name", oldName, rgdId, dao, dryRun);
         }
 
         // create nomenclature event
@@ -179,7 +262,9 @@ public class BulkGeneRename {
         ev.setRefKey("10779");
         ev.setRgdId(rgdId);
         ev.setSymbol(newSymbol);
-        dao.createNomenEvent(ev);
+        if( !dryRun ) {
+            dao.createNomenEvent(ev);
+        }
 
         System.out.println((counters.get("GENES PROCESSED")+1)
                 +".  RGD:"+rgdId+"\n"
@@ -191,7 +276,7 @@ public class BulkGeneRename {
         return true;
     }
 
-    static int addAlias(String aliasType, String aliasValue, int rgdId, Dao dao) throws Exception {
+    static int addAlias(String aliasType, String aliasValue, int rgdId, Dao dao, boolean dryRun) throws Exception {
 
         if( Utils.isStringEmpty(aliasValue) ) {
             return 0;
@@ -210,7 +295,9 @@ public class BulkGeneRename {
         alias.setValue(aliasValue);
         alias.setRgdId(rgdId);
         alias.setNotes("created by GeneMerge tool on " + new Date());
-        dao.insertAlias(alias);
+        if( !dryRun ) {
+            dao.insertAlias(alias);
+        }
         return 1;
     }
 
