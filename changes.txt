@@ -1,3 +1,6 @@
+Jan 13, 2023
+  BulkGeneRename: updated to rename a batch of orf genes from NCBI
+
 Oct 12, 2022
   BulkGeneRename: updated to rename a batch of trna genes
 

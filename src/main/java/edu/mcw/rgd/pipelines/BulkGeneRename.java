@@ -17,16 +17,21 @@ public class BulkGeneRename {
     public static void main(String[] args) throws Exception {
 
         try {
-            boolean dryRun = false;
+            boolean dryRun = true;
             int speciesTypeKey = 3;
+            String nomenInfo = "NCBI nomenclature review";
+
             //String fname = "/tmp/rat_nomen3.txt";
             //bulkRename(fname, speciesTypeKey);
 
-            //String fname = "/tmp/rat_olfactory_nomen3.txt";
-            //bulkRename2(fname, speciesTypeKey, dryRun);
+            String fname = "/tmp/rat_rename_1-9-23.txt";
+            bulkRename1(fname, speciesTypeKey, dryRun, nomenInfo);
 
-            String fname = "/tmp/rat_trna_rename.txt";
-            bulkRename3(fname, speciesTypeKey, dryRun);
+            //String fname = "/tmp/rat_olfactory_nomen3.txt";
+            //bulkRename2(fname, speciesTypeKey, dryRun, nomenInfo);
+
+            //String fname = "/tmp/rat_trna_rename.txt";
+            //bulkRename3(fname, speciesTypeKey, dryRun, nomenInfo);
 
         } catch(Exception e) {
             Utils.printStackTrace(e, logStatus);
@@ -37,7 +42,7 @@ public class BulkGeneRename {
     // file is a TAB-separated file with the following columns:
     // #RGDID	New name	New symbol
     //1586626	alpha- and gamma-adaptin binding protein, pseudogene 1	Aagab-ps1
-    static void bulkRename(String fname, int speciesTypeKey, boolean dryRun) throws Exception {
+    static void bulkRename(String fname, int speciesTypeKey, boolean dryRun, String nomenInfo) throws Exception {
 
         CounterPool counters = new CounterPool();
         Dao dao = new Dao();
@@ -79,7 +84,63 @@ public class BulkGeneRename {
             }
             String newName = cols[1].trim();
             String newSymbol = cols[2].trim();
-            if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun) ) {
+            if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun, nomenInfo) ) {
+                System.out.println(lineNr+". SKIPPED: "+line);
+            }
+        }
+        in.close();
+
+        System.out.println(counters.dumpAlphabetically());
+
+        dumpDuplicates(duplicates, lineMap);
+    }
+
+    // file is a TAB-separated file with the following columns:
+    //#RGD ID	Symbol	Name
+    //1565033	C10h17orf58	similar to human chromosome 17 open reading frame 58
+    static void bulkRename1(String fname, int speciesTypeKey, boolean dryRun, String nomenInfo) throws Exception {
+
+        CounterPool counters = new CounterPool();
+        Dao dao = new Dao();
+        System.out.println(dao.getConnectionInfo());
+
+        HashSet<Integer> rgdIdSet = new HashSet<>();
+        HashSet<Integer> duplicates = new HashSet<>();
+        Map<Integer,List<String>> lineMap = new HashMap<>();
+
+        BufferedReader in = Utils.openReader(fname);
+        int lineNr = 0;
+        String line;
+        while( (line=in.readLine())!=null ) {
+            lineNr++;
+            if( line.startsWith("#") ) {
+                continue;
+            }
+
+            line = removeDoubleQuotes(line);
+
+            String[] cols = line.split("[\\t]", -1);
+            String rgdIdStr = cols[0];
+            if( Utils.isStringEmpty(rgdIdStr) ) {
+                counters.increment("NO RGD ID for line "+lineNr+": "+line);
+                continue;
+            }
+            int rgdId = Integer.parseInt(rgdIdStr);
+
+            List<String> lines = lineMap.get(rgdId);
+            if( lines==null ) {
+                lines = new ArrayList<>();
+                lineMap.put(rgdId, lines);
+            }
+            lines.add(lineNr+". "+line);
+
+            if( !rgdIdSet.add(rgdId) ) {
+                System.out.println(lineNr+". DUPLICATE: "+line);
+                duplicates.add(rgdId);
+            }
+            String newName = cols[2].trim();
+            String newSymbol = cols[1].trim();
+            if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun, nomenInfo) ) {
                 System.out.println(lineNr+". SKIPPED: "+line);
             }
         }
@@ -93,7 +154,7 @@ public class BulkGeneRename {
     // file is a TAB-separated file with the following columns:
     //Current symbol	New Symbol	New name
     //LOC100360557	Or13a19	olfactory receptor family 13 subfamily A member 19
-    static void bulkRename2(String fname, int speciesTypeKey, boolean dryRun) throws Exception {
+    static void bulkRename2(String fname, int speciesTypeKey, boolean dryRun, String nomenInfo) throws Exception {
 
         CounterPool counters = new CounterPool();
         Dao dao = new Dao();
@@ -153,7 +214,7 @@ public class BulkGeneRename {
             }
             String newSymbol = cols[1].trim();
             String newName = cols[2].trim();
-            if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun) ) {
+            if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun, nomenInfo) ) {
                 System.out.println(lineNr+". SKIPPED: "+line);
             }
         }
@@ -167,7 +228,7 @@ public class BulkGeneRename {
     // file is a TAB-separated file with the following columns:
     //RGD_ID	old GENE_SYMBOL	new symbol	new name
     //41171343	NEWGENE_40926764	Trnap-agg18	transfer RNA proline (anticodon AGG) 18    //Current symbol	New Symbol	New name
-    static void bulkRename3(String fname, int speciesTypeKey, boolean dryRun) throws Exception {
+    static void bulkRename3(String fname, int speciesTypeKey, boolean dryRun, String nomenInfo) throws Exception {
 
         CounterPool counters = new CounterPool();
         Dao dao = new Dao();
@@ -221,7 +282,7 @@ public class BulkGeneRename {
             }
             String newSymbol = cols[2].trim();
             String newName = cols[3].trim();
-            if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun) ) {
+            if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun, nomenInfo) ) {
                 System.out.println(lineNr+". SKIPPED: "+line);
             }
         }
@@ -269,7 +330,8 @@ public class BulkGeneRename {
         return s;
     }
 
-    static boolean simpleRename(int rgdId, String newName, String newSymbol, CounterPool counters, Dao dao, int speciesTypeKey, boolean dryRun) throws Exception {
+    static boolean simpleRename(int rgdId, String newName, String newSymbol, CounterPool counters, Dao dao, int speciesTypeKey, boolean dryRun,
+                                String nomenInfo) throws Exception {
 
         counters.increment("GENES PROCESSED");
 
@@ -334,7 +396,7 @@ public class BulkGeneRename {
         ev.setEventDate(new Date());
         ev.setName(newName);
         ev.setNomenStatusType("APPROVED");
-        ev.setNotes("internal nomenclature review of pseudogenes");
+        ev.setNotes(nomenInfo);
         ev.setOriginalRGDId(rgdId);
         ev.setPreviousName(oldName);
         ev.setPreviousSymbol(oldSymbol);
