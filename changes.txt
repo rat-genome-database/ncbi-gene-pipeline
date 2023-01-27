@@ -1,3 +1,6 @@
+Jan 27, 2023
+  updated build.gradle to be gradle 6.x + compatible
+
 Jan 13, 2023
   BulkGeneRename: updated to rename a batch of orf genes from NCBI
 
