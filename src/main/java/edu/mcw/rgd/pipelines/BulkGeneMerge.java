@@ -3,6 +3,7 @@ package edu.mcw.rgd.pipelines;
 import edu.mcw.rgd.dao.impl.*;
 import edu.mcw.rgd.datamodel.*;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
+import edu.mcw.rgd.process.CounterPool;
 import edu.mcw.rgd.process.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -291,7 +292,7 @@ public class BulkGeneMerge {
      */
     public static void simpleMerge(String fname, int speciesTypeKey) throws Exception {
 
-        Counters counters = new Counters();
+        CounterPool counters = new CounterPool();
         Dao dao = new Dao();
 
         // load the input file
@@ -325,10 +326,10 @@ public class BulkGeneMerge {
         }
         reader.close();
 
-        counters.dump();
+        System.out.println(counters.dump());
     }
 
-    public static void simpleMerge(Gene geneFrom, Gene geneTo, String keepThisGeneId, Counters counters) throws Exception {
+    public static void simpleMerge(Gene geneFrom, Gene geneTo, String keepThisGeneId, CounterPool counters) throws Exception {
 
         Dao dao = new Dao();
 
@@ -339,13 +340,13 @@ public class BulkGeneMerge {
                 +".  merge from "+geneFrom.getSymbol()+" RGD:"+mergeFromRgdId
                 +" to "+geneTo.getSymbol()+" RGD:"+mergeToRgdId);
 
-        counters.increment("aliases inserted", handleAliases(geneFrom, geneTo, dao));
-        counters.increment("notes inserted", handleNotes(mergeFromRgdId, mergeToRgdId));
-        counters.increment("references inserted", handleReferences(mergeFromRgdId, mergeToRgdId));
-        counters.increment("annots inserted", handleAnnots(mergeFromRgdId, mergeToRgdId));
-        counters.increment("xdb ids inserted", handleXdbIds(mergeFromRgdId, mergeToRgdId, dao, keepThisGeneId));
-        counters.increment("nomen inserted", handleNomen(geneFrom, geneTo, dao));
-        counters.increment("map data inserted", handleMapData(mergeFromRgdId, mergeToRgdId, dao));
+        counters.add("aliases inserted", handleAliases(geneFrom, geneTo, dao));
+        counters.add("notes inserted", handleNotes(mergeFromRgdId, mergeToRgdId));
+        counters.add("references inserted", handleReferences(mergeFromRgdId, mergeToRgdId));
+        counters.add("annots inserted", handleAnnots(mergeFromRgdId, mergeToRgdId));
+        counters.add("xdb ids inserted", handleXdbIds(mergeFromRgdId, mergeToRgdId, dao, keepThisGeneId));
+        counters.add("nomen inserted", handleNomen(geneFrom, geneTo, dao));
+        counters.add("map data inserted", handleMapData(mergeFromRgdId, mergeToRgdId, dao));
         handleHistory(mergeFromRgdId, mergeToRgdId);
         counters.increment("GENES PROCESSED");
     }

@@ -4,6 +4,7 @@ package edu.mcw.rgd.pipelines;
 import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.SpeciesType;
 import edu.mcw.rgd.datamodel.XdbId;
+import edu.mcw.rgd.process.CounterPool;
 import edu.mcw.rgd.process.FileDownloader;
 import edu.mcw.rgd.process.Utils;
 
@@ -30,7 +31,7 @@ public class NcbiGeneHistoryLoader {
         String localFile = fd.downloadNew();
         System.out.println("Downloaded "+getExternalFile());
 
-        Counters counters = new Counters();
+        CounterPool counters = new CounterPool();
 
         Set<String> taxons = new HashSet<>();
         for( int skey: SpeciesType.getSpeciesTypeKeys() ) {
@@ -123,7 +124,7 @@ public class NcbiGeneHistoryLoader {
         }
 
         System.out.println("===");
-        counters.dump();
+        System.out.println(counters.dump());
     }
 
     public void setExternalFile(String externalFile) {
