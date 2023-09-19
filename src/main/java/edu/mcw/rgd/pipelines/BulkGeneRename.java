@@ -17,15 +17,20 @@ public class BulkGeneRename {
     public static void main(String[] args) throws Exception {
 
         try {
-            boolean dryRun = true;
+            boolean dryRun = false;
             int speciesTypeKey = 3;
             String nomenInfo = "NCBI nomenclature review";
+            String fname;
+
+            fname = "/tmp/bulkrename_rat_3-1-22.txt";
+            bulkRename3(fname, speciesTypeKey, dryRun, nomenInfo);
+
 
             //String fname = "/tmp/rat_nomen3.txt";
             //bulkRename(fname, speciesTypeKey);
 
-            String fname = "/tmp/rat_rename_1-9-23.txt";
-            bulkRename1(fname, speciesTypeKey, dryRun, nomenInfo);
+            //String fname = "/tmp/rat_rename_1-9-23.txt";
+            //bulkRename1(fname, speciesTypeKey, dryRun, nomenInfo);
 
             //String fname = "/tmp/rat_olfactory_nomen3.txt";
             //bulkRename2(fname, speciesTypeKey, dryRun, nomenInfo);
@@ -248,13 +253,24 @@ public class BulkGeneRename {
             line = removeDoubleQuotes(line);
 
             String[] cols = line.split("[\\t]", -1);
+            String rgdIdStr = cols[0].trim();
+            String oldSymbol = cols[1].trim();
+            String newName = cols[2].trim();
+            String newSymbol = cols[3].trim();
 
-            String rgdIdStr = cols[0];
             if( Utils.isStringEmpty(rgdIdStr) ) {
                 counters.increment("NO RGD_ID for line "+lineNr+": "+line);
                 continue;
             }
-            int rgdId = Integer.parseInt(rgdIdStr);
+
+            int rgdId = 0;
+            try {
+                rgdId = Integer.parseInt(rgdIdStr);
+            } catch (Exception ignore) {}
+            if( rgdId==0 ) {
+                counters.increment("NO RGD_ID for line "+lineNr+": "+line);
+                continue;
+            }
 
             Gene gene = dao.getGene(rgdId);
             if( gene==null ) {
@@ -262,12 +278,17 @@ public class BulkGeneRename {
                 continue;
             }
 
-            String oldSymbol = cols[1];
             if( Utils.isStringEmpty(oldSymbol) ) {
                 counters.increment("NO OLD SYMBOL for line "+lineNr+": "+line);
                 continue;
             }
 
+            if( !gene.getSymbol().equals(oldSymbol) ) {
+                counters.increment("SYMBOL doesn't match the input file; line "+lineNr+" RGD:"+rgdIdStr
+                        +" in-file:["+oldSymbol+"]  in db:["+gene.getSymbol()+"]"
+                +" new symbol:["+newSymbol+"]");
+                continue;
+            }
 
             List<String> lines = lineMap.get(rgdId);
             if( lines==null ) {
@@ -280,8 +301,6 @@ public class BulkGeneRename {
                 System.out.println(lineNr+". DUPLICATE: "+line);
                 duplicates.add(rgdId);
             }
-            String newSymbol = cols[2].trim();
-            String newName = cols[3].trim();
             if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun, nomenInfo) ) {
                 System.out.println(lineNr+". SKIPPED: "+line);
             }
@@ -335,7 +354,7 @@ public class BulkGeneRename {
 
         counters.increment("GENES PROCESSED");
 
-        // both rgd ids must be active
+        // rgd id must be active
         RgdId id = dao.getRgdId(rgdId);
         if( !id.getObjectStatus().equals("ACTIVE")  ) {
             counters.increment((counters.get("GENES PROCESSED")+1)
@@ -369,6 +388,7 @@ public class BulkGeneRename {
             dao.updateGene(gene);
             dao.updateLastModifiedDate(rgdId);
         }
+        counters.increment("genes renamed");
 
         int aliasesInserted = 0;
         if( symbolChanged ) {
@@ -435,7 +455,7 @@ public class BulkGeneRename {
         alias.setTypeName(aliasType);
         alias.setValue(aliasValue);
         alias.setRgdId(rgdId);
-        alias.setNotes("created by GeneMerge tool on " + new Date());
+        alias.setNotes("created by BulkGeneRename tool on " + new Date());
         if( !dryRun ) {
             dao.insertAlias(alias);
         }
