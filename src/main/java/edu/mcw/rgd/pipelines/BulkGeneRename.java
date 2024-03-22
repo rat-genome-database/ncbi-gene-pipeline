@@ -17,12 +17,12 @@ public class BulkGeneRename {
     public static void main(String[] args) throws Exception {
 
         try {
-            boolean dryRun = false;
+            boolean dryRun = true;
             int speciesTypeKey = 3;
             String nomenInfo = "NCBI nomenclature review";
             String fname;
 
-            fname = "/tmp/bulkrename_rat_3-1-22.txt";
+            fname = "/tmp/rat_rename.txt";
             bulkRename3(fname, speciesTypeKey, dryRun, nomenInfo);
 
 
@@ -231,9 +231,11 @@ public class BulkGeneRename {
     }
 
     // file is a TAB-separated file with the following columns:
-    //RGD_ID	old GENE_SYMBOL	new symbol	new name
-    //41171343	NEWGENE_40926764	Trnap-agg18	transfer RNA proline (anticodon AGG) 18    //Current symbol	New Symbol	New name
+    //    RGDID	Current symbol	New name	New Symbol
+    //1582902	LOC690206	RIKEN cDNA 1700013G24 gene like	1700013G24Rikl
     static void bulkRename3(String fname, int speciesTypeKey, boolean dryRun, String nomenInfo) throws Exception {
+
+        boolean onlyQC = true; // re-run -- just run the basic qc
 
         CounterPool counters = new CounterPool();
         Dao dao = new Dao();
@@ -283,26 +285,61 @@ public class BulkGeneRename {
                 continue;
             }
 
-            if( !gene.getSymbol().equals(oldSymbol) ) {
-                counters.increment("SYMBOL doesn't match the input file; line "+lineNr+" RGD:"+rgdIdStr
-                        +" in-file:["+oldSymbol+"]  in db:["+gene.getSymbol()+"]"
-                +" new symbol:["+newSymbol+"]");
+            if( gene.getSymbol().equals(newSymbol) ) {
+                if( gene.getName().equals(newName) ) {
+                    counters.increment("SYMBOL and NAME already up-to-date");
+                } else {
+                    counters.increment("SYMBOL already up-to-date, NAME is not");
+                    System.out.println(lineNr+". NAME conflict! (symbols match)   RGD:"+rgdIdStr+"  in RGD=["+gene.getName()+"] requested=["+newName+"]");
+                }
+
+                List<Gene> genesMatchingBySymbol = dao.getGenesBySymbolAndSpecies(newSymbol, speciesTypeKey);
+                if( genesMatchingBySymbol.size()!=1 || genesMatchingBySymbol.get(0).getRgdId() != rgdId ) {
+                    String msg = lineNr+". SYMBOL MULTIS: ";
+                    for( Gene gg: genesMatchingBySymbol ) {
+                        msg += "   RGD:"+gg.getRgdId()+" "+gg.getSymbol();
+                    }
+                    System.out.println(msg);
+                }
                 continue;
             }
 
-            List<String> lines = lineMap.get(rgdId);
-            if( lines==null ) {
-                lines = new ArrayList<>();
-                lineMap.put(rgdId, lines);
+            RgdId id = dao.getRgdId(rgdId);
+            if( !id.getObjectStatus().equals("ACTIVE")  ) {
+                counters.increment("INACTIVE genes");
+                System.out.println(lineNr
+                        +".  INACTIVE GENE!    RGD:"+rgdId+" ["+newSymbol+"] ["+newName+"]");
+                continue;
             }
-            lines.add(lineNr+". "+line);
 
-            if( !rgdIdSet.add(rgdId) ) {
-                System.out.println(lineNr+". DUPLICATE: "+line);
-                duplicates.add(rgdId);
+            if( onlyQC ) {
+                // just dump symbol differences
+                System.out.println(lineNr+". SYMBOL mismatch!   RGD:" + rgdIdStr
+                        + " in RGD:[" + gene.getSymbol() + "]"
+                        + " in file:[" + newSymbol + "]");
             }
-            if( !simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun, nomenInfo) ) {
-                System.out.println(lineNr+". SKIPPED: "+line);
+            else {
+                if (!gene.getSymbol().equals(oldSymbol)) {
+                    counters.increment("SYMBOL doesn't match the input file; line " + lineNr + " RGD:" + rgdIdStr
+                            + " in-file:[" + oldSymbol + "]  in db:[" + gene.getSymbol() + "]"
+                            + " new symbol:[" + newSymbol + "]");
+                    continue;
+                }
+
+                List<String> lines = lineMap.get(rgdId);
+                if (lines == null) {
+                    lines = new ArrayList<>();
+                    lineMap.put(rgdId, lines);
+                }
+                lines.add(lineNr + ". " + line);
+
+                if (!rgdIdSet.add(rgdId)) {
+                    System.out.println(lineNr + ". DUPLICATE: " + line);
+                    duplicates.add(rgdId);
+                }
+                if (!simpleRename(rgdId, newName, newSymbol, counters, dao, speciesTypeKey, dryRun, nomenInfo)) {
+                    System.out.println(lineNr + ". SKIPPED: " + line);
+                }
             }
         }
         in.close();
