@@ -3,18 +3,19 @@ package edu.mcw.rgd.pipelines;
 import edu.mcw.rgd.datamodel.RgdId;
 import edu.mcw.rgd.datamodel.SpeciesType;
 import edu.mcw.rgd.datamodel.Transcript;
+import edu.mcw.rgd.process.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TranscriptQC {
 
+    Logger logStatus = LogManager.getLogger("status");
     Logger log = LogManager.getLogger("transcriptQC");
 
     public void run() throws Exception {
@@ -24,10 +25,15 @@ public class TranscriptQC {
         SimpleDateFormat sdt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         log.info("TRANSCRIPT QC   started at "+sdt.format(new Date()));
         log.info("===");
+        logStatus.info("TRANSCRIPT QC   started at "+sdt.format(new Date()));
 
         List<Integer> speciesTypeKeys = new ArrayList<>(SpeciesType.getSpeciesTypeKeys());
         speciesTypeKeys.removeIf( sp -> !SpeciesType.isSearchable(sp) );
-        Collections.shuffle(speciesTypeKeys);
+
+        int totalTranscripts = 0;
+        int totalActiveTranscripts = 0;
+        int totalWithdrawnTranscripts1 = 0;
+        int totalWithdrawnTranscripts2 = 0;
 
         for( int speciesTypeKey: speciesTypeKeys ) {
 
@@ -60,10 +66,16 @@ public class TranscriptQC {
                             }
                         }
                     } catch( Exception e ) {
+                        log.error(e);
                         throw new RuntimeException(e);
                     }
                 }
             });
+
+            totalTranscripts += trIds.size();
+            totalActiveTranscripts += activeTranscripts.get();
+            totalWithdrawnTranscripts1 += withdrawnTranscripts1.get();
+            totalWithdrawnTranscripts2 += withdrawnTranscripts2.get();
 
             log.info("   all transcripts: "+trIds.size());
             log.info("   active transcripts processed: "+activeTranscripts);
@@ -73,6 +85,24 @@ public class TranscriptQC {
         }
 
         log.info("===");
+        log.info("ALL SPECIES");
+        log.info("   all transcripts processed: " + Utils.formatThousands(totalTranscripts));
+        log.info("   active transcripts processed: " + Utils.formatThousands(totalActiveTranscripts));
+        log.info("   withdrawn transcripts (no entry in TRANSCRIPTS table): " + Utils.formatThousands(totalWithdrawnTranscripts1));
+        log.info("   withdrawn transcripts (associated with inactive gene): " + Utils.formatThousands(totalWithdrawnTranscripts2));
         log.info("");
+
+        log.info("===");
+        log.info("");
+
+
+        logStatus.info("===");
+        logStatus.info("ALL SPECIES");
+        logStatus.info("   all transcripts processed: " + Utils.formatThousands(totalTranscripts));
+        logStatus.info("   active transcripts processed: " + Utils.formatThousands(totalActiveTranscripts));
+        logStatus.info("   withdrawn transcripts (no entry in TRANSCRIPTS table): " + Utils.formatThousands(totalWithdrawnTranscripts1));
+        logStatus.info("   withdrawn transcripts (associated with inactive gene): " + Utils.formatThousands(totalWithdrawnTranscripts2));
+        logStatus.info("OK");
+        logStatus.info("");
     }
 }
