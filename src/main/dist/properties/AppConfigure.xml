@@ -3,7 +3,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <bean id="manager" class="edu.mcw.rgd.pipelines.Manager">
-        <property name="version" value="NcbiGene pipeline  -- build Mar 22, 2024" />
+        <property name="version" value="NcbiGene pipeline  -- build Jul 15, 2025" />
     </bean>
 
     <bean id="rnaSeqLoader" class="edu.mcw.rgd.pipelines.RnaSeqLoader">
@@ -35,4 +35,6 @@
         <property name="nomenEventDesc" value="Gene reactivated at release of RGSC5.0 assembly" />
     </bean>
 
+    <bean id="transcriptQC" class="edu.mcw.rgd.pipelines.TranscriptQC">
+    </bean>
 </beans>

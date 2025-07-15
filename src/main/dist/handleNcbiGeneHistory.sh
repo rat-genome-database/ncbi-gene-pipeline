@@ -8,7 +8,7 @@ LOGFILE="$HOMEDIR/logs/ncbi_gene_history.log.${YMD}"
 
 ELIST=mtutaj@mcw.edu
 if [ "$SERVER" == "REED" ]; then
-    ELIST="mtutaj@mcw.edu,jrsmith@mcw.edu,slaulederkind@mcw.edu"
+    ELIST="mtutaj@mcw.edu jrsmith@mcw.edu slaulederkind@mcw.edu"
 fi
 
 cd $HOMEDIR

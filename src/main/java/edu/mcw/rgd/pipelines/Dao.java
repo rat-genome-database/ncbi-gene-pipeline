@@ -209,6 +209,10 @@ public class Dao {
         rgdDAO.withdraw(gene);
     }
 
+    public void withdraw(RgdId id) throws Exception {
+        rgdDAO.withdraw(id);
+    }
+
     public void updateRgdId(RgdId rgdId) throws Exception {
         rgdDAO.updateRgdId(rgdId);
     }
@@ -216,6 +220,11 @@ public class Dao {
     public void updateLastModifiedDate(int rgdId) throws Exception {
         rgdDAO.updateLastModifiedDate(rgdId);
     }
+
+    public List<RgdId> getRgdIds(int objectKey, int speciesTypeKey) throws Exception {
+        return rgdDAO.getRgdIds(objectKey, speciesTypeKey);
+    }
+
 
     ///// XDB IDS //////
 

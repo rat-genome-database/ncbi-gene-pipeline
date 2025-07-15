@@ -27,40 +27,35 @@ public class Manager {
         new XmlBeanDefinitionReader(bf).loadBeanDefinitions(new FileSystemResource("properties/AppConfigure.xml"));
         Manager manager = (Manager) (bf.getBean("manager"));
 
-        boolean loadRnaSeqs = false;
-        boolean loadProteinSeqs = false;
-
-        for( String arg: args ) {
-           switch(arg) {
-               case "--load_rna_seqs":
-                   loadRnaSeqs = true;
-                   break;
-               case "--load_protein_seqs":
-                   loadProteinSeqs = true;
-                   break;
-               case "--ncbi_gene_history":
-                   NcbiGeneHistoryLoader loader = (NcbiGeneHistoryLoader) (bf.getBean("ncbiGeneHistoryLoader"));
-                   loader.run();
-                   break;
-               case "--reactivate_genes":
-                   // this module is dangerous and it should be run manually
-                   GeneReactivator reactivator = (GeneReactivator) (bf.getBean("geneReactivator"));
-                   reactivator.run();
-                   break;
-               default:
-                   System.out.println("WARN: unknown cmdline parameter");
-           }
-        }
-
         try {
-            if( loadRnaSeqs ) {
-                SeqLoader seqLoader = (SeqLoader) (bf.getBean("rnaSeqLoader"));
-                manager.run(seqLoader);
+
+            for( String arg: args ) {
+                switch (arg) {
+                    case "--load_rna_seqs" -> {
+                        SeqLoader seqLoader = (SeqLoader) (bf.getBean("rnaSeqLoader"));
+                        manager.run(seqLoader);
+                    }
+                    case "--load_protein_seqs" -> {
+                        SeqLoader seqLoader = (SeqLoader) (bf.getBean("proteinSeqLoader"));
+                        manager.run(seqLoader);
+                    }
+                    case "--ncbi_gene_history" -> {
+                        NcbiGeneHistoryLoader loader = (NcbiGeneHistoryLoader) (bf.getBean("ncbiGeneHistoryLoader"));
+                        loader.run();
+                    }
+                    case "--reactivate_genes" -> {
+                        // this module is dangerous and it should be run manually
+                        GeneReactivator reactivator = (GeneReactivator) (bf.getBean("geneReactivator"));
+                        reactivator.run();
+                    }
+                    case "--qc_transcripts" -> {
+                        TranscriptQC transcriptQC = (TranscriptQC) (bf.getBean("transcriptQC"));
+                        transcriptQC.run();
+                    }
+                    default -> System.out.println("WARN: unknown cmdline parameter");
+                }
             }
-            if( loadProteinSeqs ) {
-                SeqLoader seqLoader = (SeqLoader) (bf.getBean("proteinSeqLoader"));
-                manager.run(seqLoader);
-            }
+
         } catch(Exception e) {
             // print stack trace to error stream
             Utils.printStackTrace(e, manager.logStatus);
