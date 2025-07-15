@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TranscriptQC {
 
@@ -32,32 +33,38 @@ public class TranscriptQC {
 
             log.info(SpeciesType.getCommonName(speciesTypeKey).toUpperCase());
 
-            int activeTranscripts = 0;
-            int withdrawnTranscripts1 = 0;
-            int withdrawnTranscripts2 = 0;
+            AtomicInteger activeTranscripts = new AtomicInteger(0);
+            AtomicInteger withdrawnTranscripts1 = new AtomicInteger(0);
+            AtomicInteger withdrawnTranscripts2 = new AtomicInteger(0);
 
             List<RgdId> trIds = dao.getRgdIds( RgdId.OBJECT_KEY_TRANSCRIPTS, speciesTypeKey );
-            Collections.shuffle(trIds);
-            for( RgdId trId: trIds ) {
-                if( trId.getObjectStatus().equals("ACTIVE") ) {
-                    activeTranscripts++;
 
-                    Transcript tr = dao.getTranscript(trId.getRgdId());
-                    if( tr==null ) {
-                        dao.withdraw(trId);
-                        withdrawnTranscripts1++;
+            trIds.parallelStream().forEach( trId -> {
 
-                    } else {
-                        RgdId geneId = dao.getRgdId(tr.getGeneRgdId());
-                        if (!geneId.getObjectStatus().equals("ACTIVE")) {
+                if (trId.getObjectStatus().equals("ACTIVE")) {
+                    activeTranscripts.incrementAndGet();
+
+                    try {
+                        Transcript tr = dao.getTranscript(trId.getRgdId());
+                        if (tr == null) {
                             dao.withdraw(trId);
-                            withdrawnTranscripts2++;
+                            withdrawnTranscripts1.incrementAndGet();
 
-                            log.info("   " + withdrawnTranscripts2 + ". " + tr.getAccId() + " RGD:" + trId.getRgdId() + "   gene RGD:" + tr.getGeneRgdId());
+                        } else {
+                            RgdId geneId = dao.getRgdId(tr.getGeneRgdId());
+                            if (!geneId.getObjectStatus().equals("ACTIVE")) {
+                                dao.withdraw(trId);
+                                int cnt = withdrawnTranscripts2.incrementAndGet();
+
+                                log.info("   " + cnt + ". " + tr.getAccId() + " RGD:" + trId.getRgdId() + "   gene RGD:" + tr.getGeneRgdId());
+                            }
                         }
+                    } catch( Exception e ) {
+                        throw new RuntimeException(e);
                     }
                 }
-            }
+            });
+
             log.info("   all transcripts: "+trIds.size());
             log.info("   active transcripts processed: "+activeTranscripts);
             log.info("   withdrawn transcripts (no entry in TRANSCRIPTS table): "+withdrawnTranscripts1);
