@@ -9,6 +9,7 @@ import edu.mcw.rgd.process.FileDownloader;
 import edu.mcw.rgd.process.Utils;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -32,6 +33,76 @@ public class NcbiGeneHistoryLoader {
         System.out.println("Downloaded "+getExternalFile());
 
         CounterPool counters = new CounterPool();
+
+        List<String> lines = readLinesFromFile( localFile, counters );
+
+        // process lines
+        lines.parallelStream().forEach( l -> {
+            String line = l;
+            // there must be at least 5 columns available
+            String[] cols = line.split("[\\t]", -1);
+            if( cols.length<5 ) {
+                return;
+            }
+
+            String oldGeneId = cols[2]; // id of discontinued gene
+
+            String newGeneId = cols[1]; // only set if discontinued gene was replaced by another gene
+
+            try {
+                List<Gene> oldGenes = dao.getActiveGenesByXdbId(XdbId.XDB_KEY_NCBI_GENE, oldGeneId);
+                if (oldGenes.isEmpty()) {
+                    counters.increment("Lines skipped -- already inactive in RGD");
+                    return;
+                }
+                Gene oldGene = oldGenes.get(0);
+
+                // skip rat genes
+                if (oldGene.getSpeciesTypeKey() == SpeciesType.RAT) {
+                    counters.increment("Lines skipped -- rat genes");
+                    return;
+                }
+
+                Gene newGene = null;
+                if (!newGeneId.equals("-")) {
+                    List<Gene> newGenes = dao.getActiveGenesByXdbId(XdbId.XDB_KEY_NCBI_GENE, newGeneId);
+                    if (newGenes.size() > 0) {
+                        newGene = newGenes.get(0);
+                    }
+                }
+
+                // handle simple withdrawals
+                String species = SpeciesType.getCommonName(oldGene.getSpeciesTypeKey());
+                if (newGene == null) {
+                    counters.increment("GENES PROCESSED");
+                    int cnt = counters.get("GENES PROCESSED");
+                    if (newGeneId.equals("-")) {
+                        dao.withdraw(oldGene);
+                        System.out.println(cnt + ". WITHDRAW: " + line);
+                        counters.increment("GENES WITHDRAWN FOR " + species);
+                        return;
+                    } else {
+                        System.out.println(cnt + ". CONFLICT for " + species + " old NCBI:" + oldGeneId + " new NCBI:" + newGeneId + " symbol:" + cols[3] + " discontinued:" + cols[4]);
+                        counters.increment("GENES WITH CONFLICT FOR " + species);
+                        return;
+                    }
+                }
+
+                // retire genes
+                BulkGeneMerge.simpleMerge(oldGene, newGene, null, counters);
+                System.out.println("  RETIRE: " + line);
+                counters.increment("GENES RETIRED FOR " + species);
+
+            } catch( Exception e ) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        System.out.println("===");
+        System.out.println(counters.dumpAlphabetically());
+    }
+
+    List<String> readLinesFromFile( String localFile, CounterPool counters ) throws IOException {
 
         Set<String> taxons = new HashSet<>();
         for( int skey: SpeciesType.getSpeciesTypeKeys() ) {
@@ -66,65 +137,7 @@ public class NcbiGeneHistoryLoader {
         Collections.shuffle(lines);
         System.out.println("Lines to be processed "+lines.size());
 
-        // process lines
-        for( String l: lines ) {
-            line = l;
-            // there must be at least 5 columns available
-            String[] cols = line.split("[\\t]", -1);
-            if( cols.length<5 ) {
-                continue;
-            }
-
-            String oldGeneId = cols[2]; // id of discontinued gene
-
-            String newGeneId = cols[1]; // only set if discontinued gene was replaced by another gene
-
-            List<Gene> oldGenes = dao.getActiveGenesByXdbId(XdbId.XDB_KEY_NCBI_GENE, oldGeneId);
-            if( oldGenes.isEmpty() ) {
-                counters.increment("Lines skipped -- already inactive in RGD");
-                continue;
-            }
-            Gene oldGene = oldGenes.get(0);
-
-            // skip rat genes
-            if( oldGene.getSpeciesTypeKey()==SpeciesType.RAT ) {
-                counters.increment("Lines skipped -- rat genes");
-                continue;
-            }
-
-            Gene newGene = null;
-            if( !newGeneId.equals("-") ) {
-                List<Gene> newGenes = dao.getActiveGenesByXdbId(XdbId.XDB_KEY_NCBI_GENE, newGeneId);
-                if( newGenes.size()>0 ) {
-                    newGene = newGenes.get(0);
-                }
-            }
-
-            // handle simple withdrawals
-            String species = SpeciesType.getCommonName(oldGene.getSpeciesTypeKey());
-            if( newGene==null ) {
-                counters.increment("GENES PROCESSED");
-                int cnt = counters.get("GENES PROCESSED");
-                if( newGeneId.equals("-") ) {
-                    dao.withdraw(oldGene);
-                    System.out.println(cnt+". WITHDRAW: " + line);
-                    counters.increment("GENES WITHDRAWN FOR " + species);
-                    continue;
-                } else {
-                    System.out.println(cnt+". CONFLICT for "+species+" old NCBI:"+oldGeneId+" new NCBI:"+newGeneId+" symbol:"+cols[3]+" discontinued:"+cols[4]);
-                    counters.increment("GENES WITH CONFLICT FOR " + species);
-                    continue;
-                }
-            }
-
-            // retire genes
-            BulkGeneMerge.simpleMerge(oldGene, newGene, null, counters);
-            System.out.println("  RETIRE: "+line);
-            counters.increment("GENES RETIRED FOR "+species);
-        }
-
-        System.out.println("===");
-        System.out.println(counters.dump());
+        return lines;
     }
 
     public void setExternalFile(String externalFile) {

@@ -1,3 +1,6 @@
+Aug 08, 2025
+  ncbi-gene-history-loader: implemented parallel processing
+
 Jul 15, 2025
   added transcript qc -- to withdraw transcripts associated with inactive genes
     or transcripts that do not have entries in TRANSCRIPTS table

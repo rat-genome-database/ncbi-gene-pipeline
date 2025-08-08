@@ -329,7 +329,7 @@ public class BulkGeneMerge {
         System.out.println(counters.dump());
     }
 
-    public static void simpleMerge(Gene geneFrom, Gene geneTo, String keepThisGeneId, CounterPool counters) throws Exception {
+    synchronized public static void simpleMerge(Gene geneFrom, Gene geneTo, String keepThisGeneId, CounterPool counters) throws Exception {
 
         Dao dao = new Dao();
 
