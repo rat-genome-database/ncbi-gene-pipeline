@@ -12,7 +12,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Collectors;
 
 /**
  * @author mtutaj
@@ -38,7 +37,7 @@ public class NcbiGeneHistoryLoader {
 
         List<String> lines = readLinesFromFile( localFile, counters );
 
-        ConcurrentLinkedQueue<Integer> discontinuedDatesForConflicts = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<String> discontinuedDatesForConflicts = new ConcurrentLinkedQueue<>();
 
         // process lines
         lines.parallelStream().forEach( l -> {
@@ -87,10 +86,9 @@ public class NcbiGeneHistoryLoader {
                         return;
                     } else {
                         String discontinuedDateStr = cols[4];
-                        int discontinuedDate = Integer.parseInt(discontinuedDateStr);
                         System.out.println(cnt + ". CONFLICT for " + species + " old NCBI:" + oldGeneId + " new NCBI:" + newGeneId + " symbol:" + cols[3] + " discontinued:" + discontinuedDateStr);
                         counters.increment("GENES WITH CONFLICT FOR " + species);
-                        discontinuedDatesForConflicts.add(discontinuedDate);
+                        discontinuedDatesForConflicts.add(discontinuedDateStr);
                         return;
                     }
                 }
@@ -105,8 +103,11 @@ public class NcbiGeneHistoryLoader {
             }
         });
         if( !discontinuedDatesForConflicts.isEmpty() ) {
-            Integer sum = discontinuedDatesForConflicts.stream().collect(Collectors.summingInt(Integer::intValue));
-            counters.add("CONFLICTS: AVERAGE DISTINUED DATE: ", sum/discontinuedDatesForConflicts.size());
+            List<String> sortedDates = new ArrayList<>(discontinuedDatesForConflicts);
+            Collections.sort(sortedDates);
+            int midPos = sortedDates.size()/2;
+            String medianDiscontinuedDate = sortedDates.get(midPos);
+            System.out.println("CONFLICTS: MEDIAN DISCONTINUED DATE: "+ medianDiscontinuedDate);
         }
 
         System.out.println(counters.dumpAlphabetically());
