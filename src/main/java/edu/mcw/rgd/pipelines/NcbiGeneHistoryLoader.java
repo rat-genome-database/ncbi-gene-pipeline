@@ -11,6 +11,8 @@ import edu.mcw.rgd.process.Utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
 /**
  * @author mtutaj
@@ -35,6 +37,8 @@ public class NcbiGeneHistoryLoader {
         CounterPool counters = new CounterPool();
 
         List<String> lines = readLinesFromFile( localFile, counters );
+
+        ConcurrentLinkedQueue<Integer> discontinuedDatesForConflicts = new ConcurrentLinkedQueue<>();
 
         // process lines
         lines.parallelStream().forEach( l -> {
@@ -82,8 +86,11 @@ public class NcbiGeneHistoryLoader {
                         counters.increment("GENES WITHDRAWN FOR " + species);
                         return;
                     } else {
-                        System.out.println(cnt + ". CONFLICT for " + species + " old NCBI:" + oldGeneId + " new NCBI:" + newGeneId + " symbol:" + cols[3] + " discontinued:" + cols[4]);
+                        String discontinuedDateStr = cols[4];
+                        int discontinuedDate = Integer.parseInt(discontinuedDateStr);
+                        System.out.println(cnt + ". CONFLICT for " + species + " old NCBI:" + oldGeneId + " new NCBI:" + newGeneId + " symbol:" + cols[3] + " discontinued:" + discontinuedDateStr);
                         counters.increment("GENES WITH CONFLICT FOR " + species);
+                        discontinuedDatesForConflicts.add(discontinuedDate);
                         return;
                     }
                 }
@@ -97,8 +104,11 @@ public class NcbiGeneHistoryLoader {
                 throw new RuntimeException(e);
             }
         });
+        if( !discontinuedDatesForConflicts.isEmpty() ) {
+            Integer sum = discontinuedDatesForConflicts.stream().collect(Collectors.summingInt(Integer::intValue));
+            counters.add("CONFLICTS: AVERAGE DISTINUED DATE: ", sum/discontinuedDatesForConflicts.size());
+        }
 
-        System.out.println("===");
         System.out.println(counters.dumpAlphabetically());
     }
 
