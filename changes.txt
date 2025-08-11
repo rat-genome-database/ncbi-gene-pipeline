@@ -1,3 +1,7 @@
+Aug 11, 2025
+  ncbi-gene-history-loader: implemented dumping of eg ids from conflicts into files
+    (to be processed by Entrez Gene pipeline)
+
 Aug 08, 2025
   ncbi-gene-history-loader: implemented parallel processing
 

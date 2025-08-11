@@ -26,6 +26,7 @@
 
     <bean id="ncbiGeneHistoryLoader" class="edu.mcw.rgd.pipelines.NcbiGeneHistoryLoader">
         <property name="externalFile" value="ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_history.gz" />
+        <property name="generateEgIdFilesForConflicts" value="true" />
     </bean>
 
     <bean id="geneReactivator" class="edu.mcw.rgd.pipelines.GeneReactivator">

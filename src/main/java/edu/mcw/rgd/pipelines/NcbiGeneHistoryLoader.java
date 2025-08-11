@@ -9,6 +9,7 @@ import edu.mcw.rgd.process.FileDownloader;
 import edu.mcw.rgd.process.Utils;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -22,6 +23,8 @@ public class NcbiGeneHistoryLoader {
 
     Dao dao = new Dao();
     private String externalFile;
+
+    private boolean generateEgIdFilesForConflicts;
 
     public void run() throws Exception {
 
@@ -38,6 +41,12 @@ public class NcbiGeneHistoryLoader {
         List<String> lines = readLinesFromFile( localFile, counters );
 
         ConcurrentLinkedQueue<String> discontinuedDatesForConflicts = new ConcurrentLinkedQueue<>();
+        final Map<String, BufferedWriter> egIdFilesForConflicts;
+        if( isGenerateEgIdFilesForConflicts() ) {
+            egIdFilesForConflicts = new HashMap<>();
+        } else {
+            egIdFilesForConflicts = null;
+        }
 
         // process lines
         lines.parallelStream().forEach( l -> {
@@ -89,6 +98,18 @@ public class NcbiGeneHistoryLoader {
                         System.out.println(cnt + ". CONFLICT for " + species + " old NCBI:" + oldGeneId + " new NCBI:" + newGeneId + " symbol:" + cols[3] + " discontinued:" + discontinuedDateStr);
                         counters.increment("GENES WITH CONFLICT FOR " + species);
                         discontinuedDatesForConflicts.add(discontinuedDateStr);
+
+                        if( egIdFilesForConflicts!=null ) {
+                            synchronized (egIdFilesForConflicts) {
+                                BufferedWriter out = egIdFilesForConflicts.get(species);
+                                if( out==null ) {
+                                    out = Utils.openWriter(species+"_conflicts_eg_ids.txt");
+                                    egIdFilesForConflicts.put(species, out);
+                                }
+                                out.write(newGeneId);
+                                out.write("\n");
+                            }
+                        }
                         return;
                     }
                 }
@@ -108,6 +129,12 @@ public class NcbiGeneHistoryLoader {
             int midPos = sortedDates.size()/2;
             String medianDiscontinuedDate = sortedDates.get(midPos);
             System.out.println("CONFLICTS: MEDIAN DISCONTINUED DATE: "+ medianDiscontinuedDate);
+        }
+
+        if( egIdFilesForConflicts!=null ) {
+            for( BufferedWriter out: egIdFilesForConflicts.values() ) {
+                out.close();
+            }
         }
 
         System.out.println(counters.dumpAlphabetically());
@@ -157,5 +184,13 @@ public class NcbiGeneHistoryLoader {
 
     public String getExternalFile() {
         return externalFile;
+    }
+
+    public boolean isGenerateEgIdFilesForConflicts() {
+        return generateEgIdFilesForConflicts;
+    }
+
+    public void setGenerateEgIdFilesForConflicts(boolean generateEgIdFilesForConflicts) {
+        this.generateEgIdFilesForConflicts = generateEgIdFilesForConflicts;
     }
 }
