@@ -1,6 +1,6 @@
 # withdraw all transcripts active in RGD that are associated with inactive genes
 
-HOMEDIR=/home/rgddata/pipelines/NcbiGene
+HOMEDIR=/home/rgddata/pipelines/ncbi-gene-pipeline
 SERVER=`hostname -s | tr '[a-z]' '[A-Z]'`
 LOGFILE="$HOMEDIR/logs/transcriptQCSummary.log"
 

@@ -1,6 +1,6 @@
 # update nucleotide and protein sequences
 
-APPNAME=NcbiGene
+APPNAME=ncbi-gene-pipeline
 APPDIR=/home/rgddata/pipelines/$APPNAME
 SERVER=`hostname -s | tr '[a-z]' '[A-Z]'`
 EMAIL_LIST=mtutaj@mcw.edu

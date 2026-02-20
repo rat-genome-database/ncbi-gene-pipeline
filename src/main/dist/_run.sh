@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 . /etc/profile
 
-APPNAME=NcbiGene
+APPNAME=ncbi-gene-pipeline
 APPDIR=/home/rgddata/pipelines/$APPNAME
 
 cd $APPDIR
