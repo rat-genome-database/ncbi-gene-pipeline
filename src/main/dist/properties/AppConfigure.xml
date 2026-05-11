@@ -3,7 +3,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <bean id="manager" class="edu.mcw.rgd.pipelines.Manager">
-        <property name="version" value="ncbi-gene-pipeline  -- build Feb 20, 2026" />
+        <property name="version" value="ncbi-gene-pipeline  -- build May 11, 2026" />
     </bean>
 
     <bean id="rnaSeqLoader" class="edu.mcw.rgd.pipelines.RnaSeqLoader">
@@ -27,6 +27,10 @@
     <bean id="ncbiGeneHistoryLoader" class="edu.mcw.rgd.pipelines.NcbiGeneHistoryLoader">
         <property name="externalFile" value="ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_history.gz" />
         <property name="generateEgIdFilesForConflicts" value="true" />
+    </bean>
+
+    <bean id="ncbiHumanGeneLoader" class="edu.mcw.rgd.pipelines.NcbiHumanGeneLoader">
+        <property name="externalFile" value="https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz" />
     </bean>
 
     <bean id="geneReactivator" class="edu.mcw.rgd.pipelines.GeneReactivator">

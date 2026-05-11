@@ -226,11 +226,24 @@ public class Dao {
     }
 
 
+    public RgdId createRgdId(int objectKey, String objectStatus, String notes, int speciesTypeKey) throws Exception {
+        return rgdDAO.createRgdId(objectKey, objectStatus, notes, speciesTypeKey);
+    }
+
+    public void insertGene(Gene gene) throws Exception {
+        geneDAO.insertGene(gene);
+    }
+
+
     ///// XDB IDS //////
 
     public List<Gene> getActiveGenesByXdbId(int xdbKey, String accId) throws Exception {
 
         return xdbIdDAO.getActiveGenesByXdbId(xdbKey, accId);
+    }
+
+    public List<XdbId> getActiveXdbIds(int xdbKey, int speciesTypeKey) throws Exception {
+        return xdbIdDAO.getActiveXdbIds(xdbKey, speciesTypeKey);
     }
 
     /// same as XdbIdDAO.getGenesByXdbId(), but all genes of type 'allele' or 'splice' are excluded

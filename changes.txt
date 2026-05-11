@@ -1,3 +1,6 @@
+May 11, 2026
+  added NcbiHumanGeneLoader: loads new human genes (with HGNC ids) from NCBI; logs disparities for genes already in RGD
+
 Feb 20, 2026
   changed distro name from 'NcbiGene' to ncbi-gene-pipeline
 

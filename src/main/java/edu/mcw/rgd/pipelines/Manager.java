@@ -48,6 +48,10 @@ public class Manager {
                         GeneReactivator reactivator = (GeneReactivator) (bf.getBean("geneReactivator"));
                         reactivator.run();
                     }
+                    case "--load_human_genes" -> {
+                        NcbiHumanGeneLoader loader = (NcbiHumanGeneLoader) (bf.getBean("ncbiHumanGeneLoader"));
+                        loader.run();
+                    }
                     case "--qc_transcripts" -> {
                         TranscriptQC transcriptQC = (TranscriptQC) (bf.getBean("transcriptQC"));
                         transcriptQC.run();
