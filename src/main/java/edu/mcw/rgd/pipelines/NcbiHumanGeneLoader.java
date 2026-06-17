@@ -2,7 +2,7 @@ package edu.mcw.rgd.pipelines;
 
 import edu.mcw.rgd.datamodel.*;
 import edu.mcw.rgd.process.CounterPool;
-import edu.mcw.rgd.process.FileDownloader;
+import edu.mcw.rgd.process.FileDownloader2;
 import edu.mcw.rgd.process.MemoryMonitor;
 import edu.mcw.rgd.process.Utils;
 import org.apache.logging.log4j.LogManager;
@@ -33,7 +33,7 @@ public class NcbiHumanGeneLoader {
         memoryMonitor.start();
         try {
             // download file from NCBI
-            FileDownloader fd = new FileDownloader();
+            FileDownloader2 fd = new FileDownloader2();
             fd.setExternalFile(getExternalFile());
             fd.setAppendDateStamp(true);
             fd.setLocalFile("data/ncbi_human_gene_info.gz");
@@ -48,11 +48,11 @@ public class NcbiHumanGeneLoader {
             log.info("Active human genes with HGNC xrefs in RGD: " + hgncToGene.size());
 
             // parse all lines, filtering to those with HGNC IDs
-            List<String[]> rows = parseFile(localFile, counters);
+            List<ParsedRow> rows = parseFile(localFile, counters);
 
-            for (String[] cols : rows) {
+            for (ParsedRow row : rows) {
                 try {
-                    processRow(cols, hgncToGene, counters);
+                    processRow(row, hgncToGene, counters);
                 } catch (Exception e) {
                     counters.increment("ROWS_WITH_ERRORS");
                     log.error("ERROR processing row", e);
@@ -66,9 +66,12 @@ public class NcbiHumanGeneLoader {
         }
     }
 
-    List<String[]> parseFile(String localFile, CounterPool counters) throws Exception {
+    /** a parsed gene_info row together with its already-extracted HGNC id */
+    private record ParsedRow(String[] cols, String hgncId) {}
 
-        List<String[]> rows = new ArrayList<>();
+    List<ParsedRow> parseFile(String localFile, CounterPool counters) throws Exception {
+
+        List<ParsedRow> rows = new ArrayList<>();
 
         BufferedReader in = Utils.openReader(localFile);
         String line;
@@ -93,7 +96,7 @@ public class NcbiHumanGeneLoader {
                 continue;
             }
 
-            rows.add(cols);
+            rows.add(new ParsedRow(cols, hgncId));
         }
         in.close();
 
@@ -117,8 +120,9 @@ public class NcbiHumanGeneLoader {
         return byHgnc;
     }
 
-    void processRow(String[] cols, Map<String, Gene> hgncToGene, CounterPool counters) throws Exception {
+    void processRow(ParsedRow row, Map<String, Gene> hgncToGene, CounterPool counters) throws Exception {
 
+        String[] cols = row.cols();
         String ncbiGeneId = cols[1];
         String symbol = cols[2];
         String dbXrefs = cols[5];
@@ -127,8 +131,8 @@ public class NcbiHumanGeneLoader {
         String symbolFromAuth = cols[10];
         String fullNameFromAuth = cols[11];
 
-        // e.g. "HGNC:5" extracted from "HGNC:HGNC:5" in the dbXrefs column
-        String hgncId = extractHgncId(dbXrefs);
+        // hgncId was already extracted while parsing (e.g. "HGNC:5" from "HGNC:HGNC:5")
+        String hgncId = row.hgncId();
         String ensemblId = extractEnsemblId(dbXrefs);
 
         // prefer nomenclature authority values when available

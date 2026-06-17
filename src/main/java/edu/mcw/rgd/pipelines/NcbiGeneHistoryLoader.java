@@ -5,7 +5,7 @@ import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.SpeciesType;
 import edu.mcw.rgd.datamodel.XdbId;
 import edu.mcw.rgd.process.CounterPool;
-import edu.mcw.rgd.process.FileDownloader;
+import edu.mcw.rgd.process.FileDownloader2;
 import edu.mcw.rgd.process.Utils;
 
 import java.io.BufferedReader;
@@ -29,7 +29,7 @@ public class NcbiGeneHistoryLoader {
     public void run() throws Exception {
 
         // download gene history file from NCBI
-        FileDownloader fd = new FileDownloader();
+        FileDownloader2 fd = new FileDownloader2();
         fd.setExternalFile(getExternalFile());
         fd.setAppendDateStamp(true);
         fd.setLocalFile("data/ncbi_gene_history.gz");

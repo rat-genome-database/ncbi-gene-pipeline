@@ -1,3 +1,6 @@
+Jun 17, 2026
+  switched file downloads to FileDownloader2 (JDK HttpClient; gene_history.gz now over https)
+
 May 11, 2026
   added NcbiHumanGeneLoader: loads new human genes (with HGNC ids) from NCBI; logs disparities for genes already in RGD
 

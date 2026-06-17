@@ -1,7 +1,7 @@
 package edu.mcw.rgd.pipelines;
 
 import edu.mcw.rgd.datamodel.*;
-import edu.mcw.rgd.process.FileDownloader;
+import edu.mcw.rgd.process.FileDownloader2;
 import edu.mcw.rgd.process.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -275,7 +275,7 @@ public class ProteinSeqLoader extends SeqLoader {
 
     String downloadFileFromNcbi(String url, String localFile) throws Exception {
 
-        FileDownloader downloader = new FileDownloader();
+        FileDownloader2 downloader = new FileDownloader2();
         downloader.setExternalFile(url);
         downloader.setLocalFile(localFile);
         String localFilePath = downloader.download();
