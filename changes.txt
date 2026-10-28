@@ -1,3 +1,6 @@
+Oct 28, 2026
+  migrated to postgres; dropped unused commons-net/httpclient; updated dependencies
+
 Jun 17, 2026
   switched file downloads to FileDownloader2 (JDK HttpClient; gene_history.gz now over https)
 
